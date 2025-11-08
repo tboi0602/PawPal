@@ -1,0 +1,10 @@
+{
+  "name": "gateway",
+  "version": "1.0.0",
+  "main": "gateway.js",
+  "scripts": {
+    "start": "nodemon gateway.js"
+  },
+  "license": "ISC",
+  "type": "module"
+}

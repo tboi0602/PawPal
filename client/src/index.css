@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@layer {
+  .button-black {
+    @apply text-white font-medium bg-black  cursor-pointer  hover:bg-gray-800 active:bg-black/60 duration-150;
+  }
+  .button-black-outline {
+    @apply border text-black font-medium backdrop-blur-sm   cursor-pointer hover:bg-gray-100 duration-150;
+  }
+}

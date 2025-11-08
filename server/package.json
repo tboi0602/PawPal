@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "gateway.js",
+  "keywords": [],
+  "type": "module",
+  "workspaces": [
+    "gateway",
+    "services/indentitys",
+    "services/users",
+    "services/shopping",
+    "services/promotions"
+  ],
+  "scripts": {
+    "start:gateway": "npm --workspace gateway run start",
+    "start:indentitys": "npm --workspace services/indentitys run start",
+    "start:users": "npm --workspace services/users run start",
+    "start:shopping": "npm --workspace services/shopping run start",
+    "start:promotions": "npm --workspace services/promotions run start",
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:indentitys\" \"npm run start:users\" \"npm run start:shopping\" \"npm run start:promotions\" "
+  }
+}

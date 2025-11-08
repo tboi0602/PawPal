@@ -1,0 +1,10 @@
+{
+  "name": "promotions-ervice",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "license": "ISC",
+  "type": "module"
+}
