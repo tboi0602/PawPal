@@ -1,87 +1,99 @@
 # PawPal
-Dự án thực hành kiến trúc hướng dịch vụ (SOA) — hệ thống quản lý sản phẩm và dịch vụ thú cưng.
 
-## Mục đích của file này
-Hướng dẫn nhanh cách cài đặt và chạy toàn bộ ứng dụng (client + server) trên Windows (PowerShell). README tập trung vào các bước cài đặt, chạy và một vài lưu ý/tự kiểm tra phổ biến.
+A service-oriented architecture (SOA) practice project — pet product and service management system.
 
-## Yêu cầu trước
-- Node.js (v16+ khuyến nghị) và npm
-- MongoDB (chạy local hoặc URL kết nối có thể đặt qua biến môi trường)
-- Mạng cục bộ cho các port mặc định (5173 cho client, 5000..5003 cho server microservices)
+## Purpose of this file
 
-## Cấu trúc chính
+A quick guide to installing and running the entire application (client + server) on Windows (PowerShell). The README focuses on the installation and running steps and some common notes/self-checks.
+
+## Prerequisites
+
+- Node.js (v16+ recommended) and npm
+- MongoDB (run locally or the connection URL can be set via environment variable)
+- Local network for default ports (5173 for client, 5000..5003 for server microservices)
+
+## Main structure
+
 - `client/` — React (Vite) front-end
-- `server/` — Node.js gateway + nhiều workspace services
+- `server/` — Node.js gateway + multiple workspace services
 
-## Cài đặt dependencies
-Mở PowerShell ở thư mục gốc của project (`PawPal`) và chạy lần lượt:
+## Install dependencies
+
+Open PowerShell in the project root directory (`PawPal`) and run in order:
 
 ```powershell
-# 1) Cài dependencies cho root, client và server workspaces
+# 1) Install dependencies for root
 npm run install
 
-# 2) Cài thêm ở client (nếu cần, npm install ở root có thể đã cài nhưng chạy riêng cho chắc)
+# 2) Install more on client
 cd .\client
 npm install
 
-# Quay về thư mục gốc
+# Return to root
 cd ..
 ```
 
-Ghi chú: có một số script trong `package.json` gốc dùng `concurrently` để chạy nhiều lệnh đồng thời. Nếu bạn thích, có thể dùng script sẵn để chạy cả client + server (xem phần chạy bên dưới).
+Note: there are some scripts in the root `package.json` that use `concurrently` to run multiple commands simultaneously. If you like, you can use the built-in script to run both client and server (see the run section below).
 
-## Thiết lập biến môi trường (tuỳ chọn)
-Server đọc biến môi trường từ `server/.env` (nếu có). Một số biến thường cần hoặc có thể muốn cấu hình:
+## Setting environment variables (optional)
 
-- `JWT_SECRET` — secret cho JSON Web Token
-- `BLOB_READ_WRITE_TOKEN` — (nếu dùng blob storage)
-- `GATEWAY_PORT` — port cho gateway (mặc định: 5000)
-- `INDENTITY_PORT`, `USER_PORT`, `SHOPPING_PORT` — port cho từng service (mặc định: 5001, 5002, 5003)
-- `MONGO_INDENTITY_URI`, `MONGO_USER_URI`, `MONGO_SHOPPING_URI` — các connection string tới MongoDB (mặc định project dùng mongodb://localhost:27017/...)
+The server reads environment variables from `server/.env` (if present). Some variables that are often needed or may want to be configured:
 
-Bạn có thể tạo file `server/.env` và đặt giá trị tương ứng. Nếu không có `.env`, các giá trị mặc định trong `server/configs/config.js` sẽ được sử dụng.
+- `JWT_SECRET` — secret for JSON Web Token
+- `BLOB_READ_WRITE_TOKEN` — (if using blob storage)
+- `GATEWAY_PORT` — port for gateway (default: 5000)
+- `INDENTITY_PORT`, `USER_PORT`, `SHOPPING_PORT` — port for each service (default: 5001, 5002, 5003)
+- `MONGO_INDENTITY_URI`, `MONGO_USER_URI`, `MONGO_SHOPPING_URI` — connection strings to MongoDB (by default the project uses mongodb://localhost:27017/...)
 
-## Chạy ứng dụng
-Bạn có 2 cách: (A) chạy cả client + server đồng thời từ root, hoặc (B) chạy riêng từng phần để debug.
+You can create a `server/.env` file and set the corresponding values. If there is no `.env`, the default values ​​in `server/configs/config.js` will be used.
 
-1) Chạy cả hai (script có sẵn)
+## Run the application
+
+You have 2 options: (A) run both client + server simultaneously from root, or (B) run each part separately for debugging.
+
+1. Run both (existing script)
 
 ```powershell
-# Ở thư mục gốc
+# In root directory
 npm run web
 ```
 
-Script `web` (định nghĩa trong `package.json` gốc) dùng `concurrently` để:
-- chạy `cd server && npm run start:all` (bật gateway + tất cả services)
-- chạy `cd client && npm run dev` (bật Vite dev server)
+Script `web` (defined in root `package.json`) uses `concurrently` to:
 
-2) Chạy riêng từng phần (tốt để debug)
+- run `cd server && npm run start:all` (enable gateway + all services)
+- run `cd client && npm run dev` (enable Vite dev server)
 
-Server (microservices) — mở một terminal mới cho server:
+2. Run each part separately (good for debugging)
+
+Server (microservices) — open a new terminal for the server:
 
 ```powershell
 cd .\server
 npm run start:all
 ```
 
-Client (React / Vite) — mở terminal khác:
+Client (React / Vite) — open another terminal:
 
 ```powershell
 cd .\client
 npm run dev
 ```
 
-Sau khi cả hai chạy, front-end thường sẽ chạy ở `http://localhost:5173` (theo cấu hình Vite). Gateway mặc định lắng nghe `http://localhost:5000`.
+After both run, the front-end will usually run at `http://localhost:5173` (according to Vite configuration). The default gateway listens to `http://localhost:5000`.
 
-## Kiểm tra nhanh / Troubleshooting
-- Nếu front-end không kết nối được tới API: kiểm tra gateway và các microservices có đang chạy không.
-- Nếu MongoDB không kết nối: kiểm tra service MongoDB đã khởi động và `MONGO_*_URI` trong `.env` nếu bạn dùng URI tuỳ chỉnh.
-- Port conflict: thay đổi biến môi trường (`GATEWAY_PORT`, `INDENTITY_PORT`, `USER_PORT`, `SHOPPING_PORT`) trong `server/.env`.
-- Nếu thấy lỗi thiếu package khi chạy `npm run web`, chạy thủ công `npm install` trong từng thư mục (`.` , `client`, `server`) rồi thử lại.
+## Quick Check / Troubleshooting
 
-## Useful scripts (tóm tắt)
-- `npm install` — cài dependencies cho root (với workspaces sẽ cài các workspace packages)
-- `npm run web` — chạy client + server đồng thời (script gốc dùng `concurrently`)
-- `cd client && npm run dev` — chạy Vite dev server
-- `cd server && npm run start:all` — chạy gateway và các service (script `start:all` trong `server/package.json`)
+- If the front-end fails to connect to the API: check if the gateway and microservices are running.
 
+- If MongoDB fails to connect: check if the MongoDB service is started and `MONGO_*_URI` in `.env` if you use a custom URI.
+
+- Port conflict: change the environment variables (`GATEWAY_PORT`, `INDENTITY_PORT`, `USER_PORT`, `SHOPPING_PORT`) in `server/.env`.
+
+- If you get a missing package error when running `npm run web`, manually run `npm install` in each directory (`.`, `client`, `server`) and try again.
+
+## Useful scripts (summary)
+
+- `npm install` — install dependencies for root (with workspaces, install workspace packages)
+- `npm run web` — run client + server simultaneously (original script uses `concurrently`)
+- `cd client && npm run dev` — run Vite dev server
+- `cd server && npm run start:all` — run gateway and services (script `start:all` in `server/package.json`)
