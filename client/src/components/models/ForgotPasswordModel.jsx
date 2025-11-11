@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Mail, Check, Lock, ArrowLeft } from "lucide-react";
+import { Mail, Check, Lock, ArrowLeft, Flag } from "lucide-react";
 import InputForm from "../inputs/InputForm";
 import { requiredChangePassword } from "../../services/auth/verifyAPI";
 import Swal from "sweetalert2";
+import { Loader2 } from "./Loaders/Loader2";
 
 const ModelForgotPassword = ({ setIsClick }) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmit, setIsSubmit] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
+    setIsLoading(true);
     e.preventDefault();
     setMessage("");
     if (!email.trim()) {
@@ -20,6 +23,7 @@ const ModelForgotPassword = ({ setIsClick }) => {
       const data = await requiredChangePassword(email);
       if (!data.success) {
         setMessage(data.message);
+        setIsLoading(false);
         return;
       }
       Swal.fire({
@@ -34,7 +38,10 @@ const ModelForgotPassword = ({ setIsClick }) => {
       });
       setIsSubmit(true);
     } catch (error) {
+      setIsLoading(false);
       setMessage(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -109,9 +116,18 @@ const ModelForgotPassword = ({ setIsClick }) => {
             <p className="text-sm text-red-600">{message}</p>
             <button
               type="submit"
-              className="bg-green-500 font-semibold py-2  rounded-xl text-xl text-white  hover:bg-green-600 active:bg-green-700 transition-all cursor-pointer"
+              className="bg-green-500 font-semibold py-2  rounded-xl text-xl text-white  
+              hover:bg-green-600 active:bg-green-700 transition-all cursor-pointer
+              disabled:bg-green-200 disabled:cursor-not-allowed"
+              disabled={isLoading}
             >
-              Send
+              {isLoading ? (
+                <div className="w-full items-center justify-center flex">
+                  <Loader2 />
+                </div>
+              ) : (
+                "Send"
+              )}
             </button>
             <div className="py-5 mt-5 border-t border-gray-300">
               <button

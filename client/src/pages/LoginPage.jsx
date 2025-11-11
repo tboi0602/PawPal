@@ -28,20 +28,10 @@ export const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) return setError("Please fill in all fields!");
-    if (email.includes(" ")) return setError("Email must not contain spaces!");
     setIsLoading(true);
     try {
       const data = await login(email, password);
       if (!data.success) {
-        Swal.fire({
-          toast: true,
-          position: "bottom-right",
-          icon: "success",
-          title: data.message,
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        });
         setIsLoading(false);
         setError(data.message);
         return;

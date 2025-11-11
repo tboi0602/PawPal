@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { getUser } from "../../../services/users/userAPI";
-import { getPets } from "../../../services/users/petAPI";
 import {
   X,
   MapPin,
@@ -29,12 +28,7 @@ export const UserDetailsModel = ({ userId, setOpenDetails }) => {
         return;
       }
       setUser(userRes.user);
-
-      // Load Pets
-      const petsRes = await getPets(userId);
-      if (petsRes.success) {
-        setPets(petsRes.pets || []);
-      }
+      setPets(userRes.user.pets || []);
     };
     loadData();
   }, [userId]);

@@ -5,19 +5,18 @@ import {
   Mail,
   Lock,
   Home,
-  X,
   CheckCircle,
   AlertTriangle,
+  CircleX,
 } from "lucide-react";
 import InputForm from "../components/inputs/InputForm";
 import { logo } from "../assets/images";
 import { imgServices } from "../assets/images";
 import Swal from "sweetalert2";
 import { validatePassword } from "../utils/validatePassword";
+import { Loader2 } from "../components/models/Loaders/Loader2";
 //API
 import { register } from "../services/auth/indentityAPI";
-
-
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -27,40 +26,58 @@ export const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [passwordValidation, setPasswordValidation] = useState({});
+  const [passwordValidation, setPasswordValidation] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMatch, setIsMatch] = useState(false);
 
   useEffect(() => {
     document.title = "PalPaw | Register";
   }, []);
 
   useEffect(() => {
+    setIsMatch(password === confirmPassword);
+  }, [password, confirmPassword]);
+
+  useEffect(() => {
     if (password.length > 0) {
       setPasswordValidation(validatePassword(password));
     } else {
-      setPasswordValidation({});
+      setPasswordValidation(false);
     }
   }, [password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
+    if (!fullName || !address || !email || !password || !confirmPassword) {
+      setIsLoading(false);
+      setError("Please fill in all fields!");
+      return;
+    }
 
-    if (!fullName || !address || !email || !password || !confirmPassword)
-      return setError("Please fill in all fields!");
+    if (password !== confirmPassword) {
+      setIsLoading(false);
+      setError("Passwords do not match!");
+      return;
+    }
 
-    if (password !== confirmPassword)
-      return setError("Passwords do not match!");
-
-    const validation = validatePassword(password);
-    if (!validation.isValid) {
-      return setError(
+    if (!passwordValidation) {
+      setIsLoading(false);
+      setError(
         "Password is too weak. Please ensure it meets all strength requirements."
       );
+      return;
     }
 
     try {
       const data = await register(fullName, address, email, password);
-      if (!data.success) return setError(data.message);
+
+      if (!data.success) {
+        setIsLoading(false);
+        setError(data.message);
+        return;
+      }
 
       Swal.fire({
         toast: true,
@@ -77,8 +94,10 @@ export const RegisterPage = () => {
 
       navigate("/login");
     } catch (error) {
-      console.error("Registration failed:", error);
-      setError("Registration failed due to a server or network error.");
+      setIsLoading(false);
+      setError(`Registration failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,17 +163,23 @@ export const RegisterPage = () => {
             />
             {/* Input Password */}
             <div className="relative">
-              <InputForm
-                placeholder="Password"
-                Icon={Lock}
-                type="password"
-                name="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative group">
+                <InputForm
+                  placeholder="Password"
+                  Icon={Lock}
+                  type="password"
+                  name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <div className="absolute z-10 p-2 w-full text-center bg-black/40 backdrop-blur-[2px] text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                  Password must be longer than 7 characters and contain the
+                  characters a-z, A-Z, 0-9, !@#,...
+                </div>
+              </div>
               {password.length > 0 && (
-                <div className="absolute top-3 -right-6">
-                  {passwordValidation.isValid ? (
+                <div className=" absolute top-3 -right-6">
+                  {passwordValidation ? (
                     <CheckCircle className="w-5 text-green-500" />
                   ) : (
                     <AlertTriangle className="w-5 text-yellow-500" />
@@ -162,61 +187,44 @@ export const RegisterPage = () => {
                 </div>
               )}
             </div>
-            
-            {password.length > 0 && (
-              <div className=" text-xs text-gray-600 p-2 border rounded-md -mt-2">
-                <p className="font-semibold mb-1">Password must contain:</p>
-                <PasswordRequirement
-                  met={passwordValidation.minLength}
-                  text="At least 8 characters"
-                />
-                <PasswordRequirement
-                  met={passwordValidation.uppercase}
-                  text="At least one uppercase letter (A-Z)"
-                />
-                <PasswordRequirement
-                  met={passwordValidation.lowercase}
-                  text="At least one lowercase letter (a-z)"
-                />
-                <PasswordRequirement
-                  met={passwordValidation.number}
-                  text="At least one number (0-9)"
-                />
-                <PasswordRequirement
-                  met={passwordValidation.specialChar}
-                  text="At least one special character (!@#...)"
-                />
-              </div>
-            )}
 
-            <InputForm
-              placeholder="Confirm password"
-              Icon={Lock}
-              type="password"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="relative">
+              <InputForm
+                placeholder="Confirm Password"
+                Icon={Lock}
+                type="password"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {(password.length > 0 || confirmPassword.length > 0) && (
+                <div className=" absolute top-3 -right-6">
+                  {isMatch ? (
+                    <CheckCircle className="w-5 text-green-500" />
+                  ) : (
+                    <CircleX className="w-5 text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
             <p className="text-sm text-red-600">{error}</p>
 
-            <button type="submit" className="button-black p-3 rounded-lg">
-              Register
+            <button
+              type="submit"
+              className="bg-black text-white font-bold hover:bg-black/80  p-3 rounded-lg cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 duration-150"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex w-full justify-center items-center">
+                  <Loader2 />
+                </div>
+              ) : (
+                "Register"
+              )}
             </button>
           </form>
         </div>
       </div>
     </div>
-  );
-};
-
-const PasswordRequirement = ({ met, text }) => {
-  const IconComponent = met ? CheckCircle : X;
-  const colorClass = met ? "text-green-500" : "text-gray-500";
-
-  return (
-    <p className={`flex items-center gap-1 ${colorClass}`}>
-      <IconComponent className="w-3 h-3" />
-      {text}
-    </p>
   );
 };

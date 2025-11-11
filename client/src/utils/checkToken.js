@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
 export const checkTokenValidity = () => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
   if (!token) {
     return false;
   }
@@ -12,6 +12,7 @@ export const checkTokenValidity = () => {
     if (expirationTime > currentTime) {
       return true;
     } else {
+      localStorage.clear();
       return false;
     }
   } catch (error) {

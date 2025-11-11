@@ -21,15 +21,15 @@ import { useNavigate } from "react-router-dom";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, link: "/admin/dashboard" },
-  { name: "Staff", icon: User, link: "/admin/staff" },
-  { name: "Customer", icon: Users, link: "/admin/customer" },
-  { name: "Service", icon: Settings, link: "/admin/service" },
-  { name: "Product", icon: ShoppingBag, link: "/admin/product" },
-  { name: "Order", icon: Logs, link: "/admin/order" },
+  { name: "Staff", icon: User, link: "/admin/staffs" },
+  { name: "Customer", icon: Users, link: "/admin/customers" },
+  { name: "Service", icon: Settings, link: "/admin/services" },
+  { name: "Product", icon: ShoppingBag, link: "/admin/products" },
+  { name: "Order", icon: Logs, link: "/admin/orders" },
   { name: "Booking", icon: TicketCheck, link: "/admin/booking" },
-  { name: "Promotion", icon: Percent, link: "/admin/promotion" },
-  { name: "Notification", icon: Bell, link: "/admin/notification" },
-  { name: "Contract", icon: FileText, link: "/admin/contract" },
+  { name: "Promotion", icon: Percent, link: "/admin/promotions" },
+  { name: "Notification", icon: Bell, link: "/admin/notifications" },
+  { name: "Contract", icon: FileText, link: "/admin/contracts" },
 ];
 
 export const Sidebar = ({ setIsClick }) => {
@@ -80,7 +80,12 @@ export const Sidebar = ({ setIsClick }) => {
       >
         <div className="flex items-center justify-center pb-6 mb-6 border-b border-gray-200">
           {isOpen ? (
-            <img src={logo} alt="logo" className="w-2/3" />
+            <img
+              src={logo}
+              alt="logo"
+              className="w-2/3 cursor-pointer hover:scale-105 duration-150 active:scale-100"
+              onClick={() => navigate("/home")}
+            />
           ) : (
             <button
               onClick={toggleSidebar}

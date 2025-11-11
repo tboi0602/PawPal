@@ -1,4 +1,4 @@
-import { Eye, Search, SquarePen, Trash, X } from "lucide-react";
+import { CirclePlus, Eye, Search, SquarePen, Trash, X } from "lucide-react";
 //components
 import InputForm from "../components/inputs/InputForm";
 import Pagination from "../components/buttons/Pagination";
@@ -62,7 +62,7 @@ export const AdminStaffPage = () => {
   }, []);
 
   useEffect(() => {
-    loadUser(1, "", "STAFF");
+    loadUser(1, "");
   }, [loadUser]);
   useEffect(() => {
     if (debounceSearch.length > 1 || debounceSearch.length === 0) {
@@ -109,7 +109,7 @@ export const AdminStaffPage = () => {
           timerProgressBar: true,
         });
       }
-      loadUser();
+      loadUser(currentPage, debounceSearch);
       Swal.fire({
         toast: true,
         position: "bottom-right",
@@ -149,10 +149,11 @@ export const AdminStaffPage = () => {
           </div>
 
           <button
-            className="bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
+            className="flex  gap-1 bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
             onClick={handleAdd}
           >
-            Add Staff
+            <CirclePlus className="w-5" />
+            New Product
           </button>
         </div>
       </div>
@@ -164,7 +165,7 @@ export const AdminStaffPage = () => {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                STT
+                No.
               </th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 Name

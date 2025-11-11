@@ -7,8 +7,10 @@ import { AdminCustomerPage } from "./pages/AdminCustomerPage";
 import { AdminStaffPage } from "./pages/AdminStaffPage";
 import { AdminProductPage } from "./pages/AdminProductPage";
 import { AdminPromotionPage } from "./pages/AdminPromotionPage";
+import { AdminNotificationPage } from "./pages/AdminNotificationPage";
 
 import { HomePage } from "./pages/HomePage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ActivatePage } from "./pages/ActivatePage";
@@ -18,6 +20,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/layouts/admin/ProtectedRoute";
 import { Layout } from "./components/layouts/customer/Layout";
 import { LayoutAdmin } from "./components/layouts/admin/LayoutAdmin";
+import { PetPage } from "./pages/PetPage";
 
 function App() {
   return (
@@ -32,7 +35,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/staff"
+          path="/admin/staffs"
           element={
             <ProtectedRoute
               children={<LayoutAdmin children={<AdminStaffPage />} />}
@@ -40,7 +43,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/customer"
+          path="/admin/customers"
           element={
             <ProtectedRoute
               children={<LayoutAdmin children={<AdminCustomerPage />} />}
@@ -48,7 +51,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/product"
+          path="/admin/products"
           element={
             <ProtectedRoute
               children={<LayoutAdmin children={<AdminProductPage />} />}
@@ -56,21 +59,31 @@ function App() {
           }
         />
         <Route
-          path="/admin/promotion"
+          path="/admin/promotions"
           element={
             <ProtectedRoute
               children={<LayoutAdmin children={<AdminPromotionPage />} />}
             />
           }
         />
+        <Route
+          path="/admin/notifications"
+          element={
+            <ProtectedRoute
+              children={<LayoutAdmin children={<AdminNotificationPage />} />}
+            />
+          }
+        />
+
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/home"
-          element={<Layout children={<HomePage />} />}
-        ></Route>
+        <Route path="/home">
+          <Route index element={<Layout children={<HomePage />} />} />
+          <Route path="me" element={<Layout children={<ProfilePage />} />}/>
+          <Route path="pets" element={<Layout children={<PetPage />} />}/>
+        </Route>
 
         <Route path="/activate" element={<ActivatePage />} />
         <Route path="/recovery-password" element={<ForgotPasswordPage />} />

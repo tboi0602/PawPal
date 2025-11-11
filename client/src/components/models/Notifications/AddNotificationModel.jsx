@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { X, Phone, Mail, User, MapPin } from "lucide-react";
 import InputForm from "../../inputs/InputForm";
+import { useState } from "react";
 import Swal from "sweetalert2";
 import { Loader2 } from "../Loaders/Loader2";
-import { addUser } from "../../../services/users/userAPI";
+import { addNotifications } from "../../../services/notifications/notificationAPI";
+import { X, Tag } from "lucide-react";
+import { getItem } from "../../../utils/operations";
 
-export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
+export const AddNotificationModel = ({ setOpenAdd, reloadNotifications }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+    title: "",
+    content: "",
+    type: "SALE",
   });
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const senderId = getItem("user-data")._id;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,17 +25,17 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
     setIsLoading(true);
     e.preventDefault();
     setMessage("");
-    if (!formData.name || !formData.email || !formData.address || !formData.phone) {
+    if (!formData.title || !formData.content || !formData.type) {
       setIsLoading(false);
       setMessage("Please fill in completely!");
       return;
     }
 
     try {
-      const dataRes = await addUser(formData);
+      const dataRes = await addNotifications(senderId, formData);
 
       if (!dataRes.success) {
-        setMessage(dataRes.message || "Failed to add staff member.");
+        setMessage(dataRes.message || "Failed to add notification.");
         setIsLoading(false);
         Swal.fire({
           toast: true,
@@ -52,20 +53,19 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
         toast: true,
         position: "bottom-right",
         icon: "success",
-        title: dataRes.message || "New staff member added successfully!",
+        title: dataRes.message || "New notification member added successfully!",
         showConfirmButton: false,
         timer: 5000,
         timerProgressBar: true,
       });
 
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
+        title: "",
+        content: "",
+        type: "",
       });
 
-      reloadStaffs();
+      reloadNotifications();
       setOpenAdd(false);
     } catch (error) {
       setMessage(`An unexpected error occurred: ${error.message}`);
@@ -76,7 +76,7 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4 animate-fadeIn">
       <div className="relative z-50 w-full max-w-2xl bg-white text-black shadow-2xl rounded-xl p-6 overflow-y-auto max-h-[90vh] transition-all duration-300">
         {/* Close button */}
         <X
@@ -87,7 +87,7 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
 
         {/* Header */}
         <h2 className="text-3xl font-extrabold mb-6 text-center text-black border-b border-black pb-3">
-          Add New Staff Member
+          Add New Notification
         </h2>
 
         {/* Error Message */}
@@ -96,65 +96,49 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-black">
-                Full Name
-              </label>
+              <label className="text-sm font-semibold text-black">Title</label>
               <InputForm
                 type="text"
-                name="name"
-                placeholder="Full namme"
-                value={formData.name}
-                Icon={User}
+                name="title"
+                placeholder="Title"
+                value={formData.title}
+                Icon={Tag}
                 onChange={handleChange}
                 className="border-neutral-300 focus:border-black focus:ring-0"
-                required
               />
             </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-black">Email</label>
-              <InputForm
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
-                Icon={Mail}
-                onChange={handleChange}
-                className="border-neutral-300 focus:border-black focus:ring-0"
-                required
-              />
-            </div>
-
             <div className="flex flex-col gap-1">
               <label className="text-sm font-semibold text-black">
-                Phone Number
+                Content
               </label>
-              <InputForm
-                type="number"
-                name="phone"
-                placeholder="Number phone"
-                value={formData.phone}
-                Icon={Phone}
+              <textarea
+                name="content"
+                placeholder="Content"
+                value={formData.content}
                 onChange={handleChange}
-                className="border-neutral-300 focus:border-black focus:ring-0"
-              />
+                className="outline-none border border-gray-200 rounded-lg p-3"
+              ></textarea>
             </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-black">
-                Address
+            <div className="flex flex-col gap-1 ">
+              <label
+                className="text-sm font-semibold text-black"
+                htmlFor="type-select"
+              >
+                Type
               </label>
-              <InputForm
-                type="text"
-                name="address"
-                placeholder="Address"
-                value={formData.address}
-                Icon={MapPin}
+              <select
+                id="type-select"
+                name="type"
+                value={formData.type}
                 onChange={handleChange}
-                className="border-neutral-300 focus:border-black focus:ring-0"
-              />
+                className="w-full rounded-lg border border-neutral-300 bg-white p-3 text-gray-900 
+                focus:border-black focus:ring-0 appearance-none pr-8"
+              >
+                <option value="SALE">SALE</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
+              </select>
             </div>
           </div>
 
@@ -170,7 +154,7 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
                 <Loader2 />{" "}
               </div>
             ) : (
-              "Save Staff"
+              "Send Notification"
             )}
           </button>
         </form>
@@ -178,5 +162,3 @@ export const AddStaffModel = ({ setOpenAdd, reloadStaffs }) => {
     </div>
   );
 };
-
-export default AddStaffModel;

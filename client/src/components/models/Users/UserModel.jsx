@@ -23,7 +23,7 @@ export const UserModel = () => {
     navigate("/login");
   };
   return (
-    <div className="absolute mt-8 top-0 right-0 w-32 h-32 rounded-b-lg flex flex-col justify-evenly items-center shadow-lg">
+    <div className="absolute bg-white mt-10 top-0 right-0 w-32 h-32 rounded-b-lg flex flex-col justify-evenly items-center shadow-lg">
       <a
         className="flex gap-1 justify-center items-center w-full p-2  hover:bg-gray-100"
         href="/home/me"

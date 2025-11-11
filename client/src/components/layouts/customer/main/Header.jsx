@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom"; 
+import { useLocation } from "react-router-dom";
 import { logo } from "../../../../assets/images";
 import {
   PawPrint,
-  Bone,
   Logs,
   TicketCheck,
   User,
   Bell,
   ShoppingCart,
+  ShowerHead,
+  ShoppingBag,
 } from "lucide-react";
 import { UserModel } from "../../../models/Users/UserModel";
 import { NotifiModel } from "../../../models/NotifiModel";
 
-export const Header = ({ name, numberNotification }) => {
+export const Header = ({ name, numberUnread, reloadNotifications }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -37,44 +38,42 @@ export const Header = ({ name, numberNotification }) => {
 
   const getNavLinkClass = (path) => {
     if (currentPath === path) {
-      return "text-black border-b duration-150 flex gap-1 -translate-y-1";
+      return "p-2 rounded-lg text-black bg-gray-100 shadow-md -translate-y-1 duration-150 flex gap-1 border border-gray-400";
     }
-    return "text-black/70  hover:text-black hover:border-b hover:-translate-y-1 duration-150 flex gap-1";
+    return " p-2  rounded-lg text-black/70  hover:text-black hover:bg-gray-100 hover:shadow-md  hover:-translate-y-1 duration-150 flex gap-1";
   };
 
   return (
     <div
       className={` ${
         isScroll
-          ? " bg-white/50 backdrop-blur-sm shadow-md scale-100"
+          ? " bg-white/70 backdrop-blur-sm shadow-md scale-100"
           : "scale-105"
-      } fixed z-50 flex w-full font-medium items-center justify-between px-20 py-2 transition-all duration-400`}
+      } fixed z-90 py-4 flex w-full font-medium items-center justify-between px-20 transition-all duration-400`}
     >
       <a href="/home">
         <img src={logo} className="w-30 cursor-pointer" />
       </a>
-      <div className="flex items-center gap-5">
-        <a className={getNavLinkClass("/home/product")} href="/home/product">
-          <PawPrint className="w-5" />
+      <div className="flex items-center justify-evenly w-1/2">
+        <a className={getNavLinkClass("/home/products")} href="/home/product">
+          <ShoppingBag className="w-5" />
           Product
         </a>
-        <a className={getNavLinkClass("/home/service")} href="/home/service">
-          <Bone className="w-5" />
+        <a className={getNavLinkClass("/home/services")} href="/home/service">
+          <ShowerHead className="w-6" />
           Service
         </a>
-        <a
-          className={getNavLinkClass("/home/order")}
-          href="/home/order"
-        >
+        <a className={getNavLinkClass("/home/orders")} href="/home/order">
           <Logs className="w-5" />
           Order
         </a>
-        <a
-          className={getNavLinkClass("/home/booking")}
-          href="/home/booking"
-        >
+        <a className={getNavLinkClass("/home/booking")} href="/home/booking">
           <TicketCheck className="w-5" />
           Booking
+        </a>
+        <a className={getNavLinkClass("/home/pets")} href="/home/pets">
+          <PawPrint className="w-5" />
+          My Pet
         </a>
       </div>
       {name ? (
@@ -92,13 +91,15 @@ export const Header = ({ name, numberNotification }) => {
               setOpenUser(false);
             }}
           >
-            {numberNotification > 0 && (
+            {numberUnread > 0 && (
               <div className="absolute bg-red-600 w-3 h-3 rounded-full top-1 right-2 text-white text-[10px] font-medium flex justify-center items-center">
-                {numberNotification}
+                {numberUnread}
               </div>
             )}
             <Bell className="w-5" />
-            {openNotifi && <NotifiModel />}
+            {openNotifi && (
+              <NotifiModel reloadNotifications={reloadNotifications} />
+            )}
           </div>
           <div
             className="relative button-black-outline p-1 px-2 rounded-md flex gap-1"

@@ -3,10 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { Lock, XCircle, CheckCircle } from "lucide-react";
 import InputForm from "../components/inputs/InputForm";
+import { Loader2 } from "../components/models/Loaders/Loader2";
 import {
   changePassword,
   requiredChangePassword,
 } from "../services/auth/verifyAPI";
+import { useRef } from "react";
+import { validatePassword } from "../utils/validatePassword";
 
 export const ForgotPasswordPage = () => {
   // eslint-disable-next-line no-unused-vars
@@ -17,11 +20,13 @@ export const ForgotPasswordPage = () => {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(null);
 
-  const [newPassword, setNewPassword] = useState(""); // === LOGIC COOLDOWN BỔ SUNG ===
+  const [newPassword, setNewPassword] = useState("");
 
   const [cooldown, setCooldown] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const COOLDOWN_TIME = 120;
   const LOCAL_STORAGE_KEY = "lastPasswordResendTime";
+  const hasRunRef = useRef(false);
 
   useEffect(() => {
     const lastSent = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -36,14 +41,17 @@ export const ForgotPasswordPage = () => {
     if (cooldown <= 0) return;
     const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [cooldown]); 
+  }, [cooldown]);
+
   useEffect(() => {
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+    if (!email || !token) {
+      setSuccess(false);
+      setMessage("The activation link is invalid. Please check again.");
+      return;
+    }
     const loadData = async () => {
-      if (!email || !token) {
-        setSuccess(false);
-        setMessage("The activation link is invalid. Please check again.");
-        return;
-      }
       try {
         const data = await changePassword(email, token);
         if (!data.success) {
@@ -56,13 +64,25 @@ export const ForgotPasswordPage = () => {
       }
     };
     loadData();
-  }, [email, token]);
+  }, []);
 
   const handleChangePassword = async () => {
-    if (!newPassword) return setMessage("Please enter new pasword");
+    setIsLoading(true);
+    if (!newPassword) {
+      setIsLoading(false);
+      setMessage("Please enter new pasword");
+      return;
+    }
+    if (!validatePassword(newPassword)) {
+      setIsLoading(false);
+      setMessage("Password must contain the characters a-z, A-Z, 0-9, !@#...");
+      return;
+    }
+
     try {
       const data = await changePassword(email, token, newPassword);
       if (!data.success) {
+        setIsLoading(false);
         setSuccess(false);
         setMessage(data.message);
         return;
@@ -82,24 +102,30 @@ export const ForgotPasswordPage = () => {
         },
       });
     } catch (err) {
+      setIsLoading(false);
       setSuccess(false);
       setMessage(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleResendRecovery = async () => {
+    setIsLoading(true);
     if (cooldown > 0) return;
     try {
-      const data = await requiredChangePassword(email); 
+      const data = await requiredChangePassword(email);
       if (data.success) {
         localStorage.setItem(LOCAL_STORAGE_KEY, Date.now().toString());
         setCooldown(COOLDOWN_TIME);
+      } else {
+        setIsLoading(false);
       }
       setMessage(data.message);
       Swal.fire({
         toast: true,
         position: "bottom-right",
-        icon: data.success ? "success" : "error", 
+        icon: data.success ? "success" : "error",
         title: data.message,
         showConfirmButton: false,
         timer: 5000,
@@ -107,7 +133,10 @@ export const ForgotPasswordPage = () => {
         customClass: { popup: "swal-margin" },
       });
     } catch (err) {
+      setIsLoading(false);
       setMessage(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,12 +167,21 @@ export const ForgotPasswordPage = () => {
               onChange={(e) => setNewPassword(e.target.value)}
             />
             <p className="text-red-600 w-full text-left">{message}</p>{" "}
-            <div
-              className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition duration-300 cursor-pointer"
+            <button
+              className="w-full bg-black text-white py-3 rounded-lg font-bold 
+              hover:bg-gray-800 transition duration-300 cursor-pointer
+              disabled:bg-gray-500 disabled:cursor-not-allowed"
               onClick={handleChangePassword}
+              disabled={isLoading}
             >
-              Confirm
-            </div>
+              {isLoading ? (
+                <div className="flex w-full justify-center items-center">
+                  <Loader2 />
+                </div>
+              ) : (
+                "Confirm"
+              )}
+            </button>
           </div>
         </div>
       ) : success == false ? (
@@ -152,18 +190,25 @@ export const ForgotPasswordPage = () => {
           <div className="flex flex-col items-center">
             <XCircle className="w-16 h-16 text-red-500 mb-4" />{" "}
             <p className="text-lg font-semibold text-red-700 mb-6">{message}</p>
-            <div
+            <button
               className={`w-full p-3 rounded-xl font-bold transition duration-300 ${
                 cooldown > 0
                   ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-black text-white hover:bg-gray-800 cursor-pointer"
+                  : "bg-black text-white hover:bg-gray-800 cursor-pointer disabled:bg-gray-500 disabled:cursor-not-allowed"
               }`}
               onClick={handleResendRecovery}
+              disabled={isLoading}
             >
-              {cooldown > 0
-                ? `Please wait ${formatTime(cooldown)}`
-                : "Resend Recovery link"}
-            </div>
+              {cooldown > 0 ? (
+                `Please wait ${formatTime(cooldown)}`
+              ) : isLoading ? (
+                <div className="flex w-full items-center justify-center">
+                  <Loader2 />{" "}
+                </div>
+              ) : (
+                "Resend Recovery link"
+              )}
+            </button>
           </div>
         </div>
       ) : (

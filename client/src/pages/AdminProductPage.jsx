@@ -1,4 +1,4 @@
-import { Eye, Search, SquarePen, Trash, X } from "lucide-react";
+import { CirclePlus, Eye, Search, SquarePen, Trash, X } from "lucide-react";
 //components
 import InputForm from "../components/inputs/InputForm";
 import Pagination from "../components/buttons/Pagination";
@@ -146,10 +146,11 @@ export const AdminProductPage = () => {
             )}
           </div>
           <button
-            className="bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
+            className="flex  gap-1 bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
             onClick={handleAdd}
           >
-            Add Product
+            <CirclePlus className="w-5" />
+            New Product
           </button>
         </div>
       </div>
@@ -160,7 +161,7 @@ export const AdminProductPage = () => {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                STT
+                No.
               </th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 Name
