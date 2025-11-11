@@ -11,6 +11,8 @@ import {
   INDENTITY_TARGET,
   SHOPPING_TARGET,
   PROMOTION_TARGET,
+  EMAIL_TARGET,
+  NOTIFICATION_TARGET,
 } from "../configs/config.js";
 
 import { verifyAuth } from "../middlewares/authRequired.js";
@@ -58,6 +60,23 @@ app.use(
     target: PROMOTION_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api-promotion": "" },
+  })
+);
+app.use(
+  "/api-email",
+  createProxyMiddleware({
+    target: EMAIL_TARGET,
+    changeOrigin: true,
+    pathRewrite: { "^/api-email": "" },
+  })
+);
+app.use(
+  "/api-notification",
+  verifyAuth,
+  createProxyMiddleware({
+    target: NOTIFICATION_TARGET,
+    changeOrigin: true,
+    pathRewrite: { "^/api-notification": "" },
   })
 );
 app.listen(GATEWAY_PORT, () =>

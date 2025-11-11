@@ -42,3 +42,16 @@ export const PROMOTION_PORT = process.env.PROMOTION_PORT || 5004;
 export const MONGO_PROMOTION_URI =
   process.env.MONGO_PROMOTION_URI || "mongodb://localhost:27017/promotion";
 export const PROMOTION_TARGET = `http://localhost:${PROMOTION_PORT}`;
+
+//* Email
+export const EMAIL_PORT = process.env.EMAIL_PORT || 5005;
+export const EMAIL_TARGET = `http://localhost:${EMAIL_PORT}`;
+export const EMAIL_USER = process.env.EMAIL_USER;
+export const EMAIL_PASS = process.env.EMAIL_PASS;
+
+//* Notification
+export const NOTIFICATION_PORT = process.env.NOTIFICATION_PORT || 5006;
+export const MONGO_NOTIFICATION_URI =
+  process.env.MONGO_NOTIFICATION_URI ||
+  "mongodb://localhost:27017/notification";
+export const NOTIFICATION_TARGET = `http://localhost:${NOTIFICATION_PORT}`;

@@ -51,7 +51,7 @@ export const handleLogin = async (req, res) => {
     const data = await response.json();
     const user = data.user;
     const token = jwt.sign(
-      { id: user._id, role: user.role, isActivate: user.isActivate },
+      { id: user?._id, role: user?.role, isActivate: user?.isActivate },
       JWT_SECRET,
       {
         expiresIn: "2h",

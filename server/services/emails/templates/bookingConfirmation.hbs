@@ -1,0 +1,61 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking Confirmation</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color:
+      #333; line-height: 1.6; } .container { max-width: 600px; margin: 20px
+      auto; padding: 20px; background-color: #ffffff; border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); } .header { background-color:
+      #FF6B6B; color: #ffffff; padding: 10px 20px; border-top-left-radius: 8px;
+      border-top-right-radius: 8px; text-align: center; } .content { padding:
+      20px; } .content p { font-size: 16px; margin-bottom: 20px; } .footer {
+      margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+      .button { display: inline-block; background-color: #FF6B6B; color: #ffffff
+      !important; padding: 12px 25px; text-decoration: none; border-radius: 5px;
+      margin-top: 20px; font-weight: bold; } /* Bảng tóm tắt thông tin */
+      .booking-details { width: 100%; border-collapse: collapse; margin-top:
+      20px; } .booking-details th, .booking-details td { padding: 12px; border:
+      1px solid #ddd; text-align: left; } .booking-details th {
+      background-color: #f8f8f8; width: 40%; }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Booking Confirmed</h2>
+      </div>
+      <div class="content">
+        <p>Hello <strong>{{customerName}}</strong>,</p>
+        <p>Your booking has been successfully confirmed. Here are the details:</p>
+
+        <table class="booking-details">
+          <tbody>
+            <tr>
+              <th>Booking ID</th>
+              <td><strong>{{bookingId}}</strong></td>
+            </tr>
+            <tr>
+              <th>Service Name</th>
+              <td>{{serviceName}}</td>
+            </tr>
+            <tr>
+              <th>Booking Time</th>
+              <td>{{bookingTime}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="{{bookingLink}}" class="button">View Booking Details</a>
+        </p>
+
+      </div>
+      <div class="footer">
+        <p>©copy; 2025 PawPal. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

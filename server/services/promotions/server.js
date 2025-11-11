@@ -14,7 +14,6 @@ import {
 
 dotenv.config();
 
-console.log(PROMOTION_PORT);
 
 const app = express();
 app.use(express.json());

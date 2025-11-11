@@ -1,0 +1,11 @@
+{
+  "name": "emails-service",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "dev": "nodemon server.js"
+  },
+  "license": "ISC",
+  "type": "module"
+}

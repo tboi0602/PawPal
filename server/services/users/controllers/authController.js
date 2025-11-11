@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import Verify from "../models/Verify.js";
 import crypto from "crypto";
 import { CLIENT_TARGET } from "../../../configs/config.js";
+import { sendEmail } from "./sendEmail.js";
 const validatePassword = (password) => {
   const minLength = /.{8,}/;
   const uppercase = /(?=.*[A-Z])/;
@@ -10,29 +11,24 @@ const validatePassword = (password) => {
   const number = /(?=.*\d)/;
   const specialChar = /(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>/?~`])/;
 
-  return {
-    minLength: minLength.test(password),
-    uppercase: uppercase.test(password),
-    lowercase: lowercase.test(password),
-    number: number.test(password),
-    specialChar: specialChar.test(password),
-    isValid:
-      minLength.test(password) &&
-      uppercase.test(password) &&
-      lowercase.test(password) &&
-      number.test(password) &&
-      specialChar.test(password),
-  };
+  return (
+    minLength.test(password) &&
+    uppercase.test(password) &&
+    lowercase.test(password) &&
+    number.test(password) &&
+    specialChar.test(password)
+  );
 };
 //! Register
 export const handleRegister = async (req, res) => {
   const dataRegister = req.body;
   const email = dataRegister.email;
   const password = dataRegister.password;
-  if (!validatePassword)
-    return res
-      .status(409)
-      .json({ success: false, message: "Password is too weak." });
+  if (!validatePassword(password))
+    return res.status(409).json({
+      success: false,
+      message: "Password must contain the characters a-z, A-Z, 0-9, !@#....",
+    });
   try {
     const existingUser = await User.findOne({ email: email }).lean();
     if (existingUser)
@@ -41,6 +37,8 @@ export const handleRegister = async (req, res) => {
         .json({ success: false, message: "This email is already in use." });
 
     const hashPassword = await bcrypt.hash(password, 10);
+    const token = crypto.randomBytes(32).toString("hex");
+
     const newUser = new User({
       ...dataRegister,
       password: hashPassword,
@@ -54,7 +52,6 @@ export const handleRegister = async (req, res) => {
         token: token,
       });
 
-    const token = crypto.randomBytes(32).toString("hex");
     const verify = new Verify({
       email: email,
       verificationToken: token,
@@ -62,16 +59,30 @@ export const handleRegister = async (req, res) => {
       type: "activateAccount",
     });
     await newUser.save();
-    const verifySave = await verify.save();
 
-    //*Gọi email service để gửi mail
-    if (verifySave)
+    const verifySave = await verify.save();
+    const templateName = "activeAccount";
+    const to = email;
+    const subject = "Activate Your Account";
+    const data = {
+      customerName: dataRegister.name,
+      activationLink: `${CLIENT_TARGET}/activate?token=${token}&email=${email}`,
+    };
+    const dataRes = await sendEmail(templateName, to, subject, data);
+
+    if (verifySave && dataRes.success)
       return res.status(201).json({
         success: true,
         message:
           "Register successful, please check your email to activate your account.",
         token: token,
       });
+    else {
+      return res.status(503).json({
+        success: false,
+        message: "Register failed please try again later.",
+      });
+    }
   } catch (error) {
     return res
       .status(500)
@@ -119,6 +130,11 @@ export const ActivationRequired = async (req, res) => {
       message: "User not found",
     });
   //* Xóa những Yêu cầu cũ
+  if (user.isActivate)
+    return res.status(400).json({
+      success: false,
+      message: "Your account has been previously activated",
+    });
   await Verify.deleteMany({ email: email, type: "activateAccount" });
   const verify = new Verify({
     email: email,
@@ -127,14 +143,28 @@ export const ActivationRequired = async (req, res) => {
     type: "activateAccount",
   });
   const verifySave = await verify.save();
-  //* Gọi server email để gửi mail ("http://localhost:5173/...email=email&token=token")
+  //* Gọi server email để gửi mail
+  const templateName = "activeAccount";
+  const to = email;
+  const subject = "Activate Your Account";
+  const data = {
+    customerName: user.name,
+    activationLink: `${CLIENT_TARGET}/activate?token=${token}&email=${email}`,
+  };
+  const dataRes = await sendEmail(templateName, to, subject, data);
   try {
-    if (verifySave)
+    if (verifySave && dataRes.success)
       return res.status(200).json({
         success: true,
         message: "Please check your email to activate account",
         token: token,
       });
+    else {
+      return res.status(503).json({
+        success: false,
+        message: "Resend failed please try again later.",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -199,14 +229,28 @@ export const ChangePasswordRequired = async (req, res) => {
     type: "changePassword",
   });
   const newVerifySave = await newVerify.save();
-  //* Gọi server email để gửi mail ("http://localhost:5173/...email=email&token=token")
+  //* Gọi server email để gửi mail
+  const templateName = "resetPassword";
+  const to = email;
+  const subject = "Your Password Reset Request";
+  const data = {
+    customerName: user.name,
+    resetLink: `${CLIENT_TARGET}/recovery-password?token=${token}&email=${email}`,
+  };
+  const dataRes = await sendEmail(templateName, to, subject, data);
   try {
-    if (newVerifySave)
+    if (newVerifySave && dataRes.success)
       return res.status(200).json({
         success: true,
         message: "Please check your email to change password",
         token: token,
       });
+    else {
+      return res.status(503).json({
+        success: false,
+        message: "Required failed please try again later.",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -232,6 +276,12 @@ export const handleChangePassword = async (req, res) => {
         message: "Invalid or expired verification link.",
       });
     if (password) {
+      if (!validatePassword(password))
+        return res.status(409).json({
+          success: false,
+          message:
+            "Password must be longer and contain the characters a-z, A-Z, 0-9, !@#....",
+        });
       const hashPassword = await bcrypt.hash(password, 10);
       const changePass = await User.findOneAndUpdate(
         { email: email },

@@ -1,0 +1,79 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmation</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color:
+      #333; line-height: 1.6; } .container { max-width: 600px; margin: 20px
+      auto; padding: 20px; background-color: #ffffff; border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); } .header { background-color:
+      #FF6B6B; color: #ffffff; padding: 10px 20px; border-top-left-radius: 8px;
+      border-top-right-radius: 8px; text-align: center; } .content { padding:
+      20px; } .content p { font-size: 16px; margin-bottom: 20px; } .footer {
+      margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+      .button { display: inline-block; background-color: #FF6B6B; color: #ffffff
+      !important; padding: 12px 25px; text-decoration: none; border-radius: 5px;
+      margin-top: 20px; font-weight: bold; } .order-summary { width: 100%;
+      border-collapse: collapse; margin-top: 20px; } .order-summary th,
+      .order-summary td { padding: 12px; border: 1px solid #ddd; text-align:
+      left; } .order-summary th { background-color: #f8f8f8; } .total-row {
+      font-weight: bold; font-size: 18px; } .product-item { display: flex;
+      align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+      .product-item img { width: 50px; height: 50px; margin-right: 15px;
+      border-radius: 4px; } .product-item .details { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Thank you for your order!</h2>
+      </div>
+      <div class="content">
+        <p>Hello <strong>{{customerName}}</strong>,</p>
+        <p>Your order
+          <strong>#{{orderId}}</strong>, placed on
+          {{orderDate}}, has been successfully confirmed.</p>
+
+        <h3 style="color: #007bff;">Order Summary</h3>
+
+        <div class="product-list">
+          {{#each products}}
+            <div class="product-item">
+              <img src="{{this.imageUrl}}" alt="{{this.name}}" />
+              <div class="details">
+                <strong>{{this.name}}</strong>
+                <div>Quantity: {{this.quantity}}</div>
+              </div>
+            </div>
+          {{/each}}
+
+          {{#if otherItemsCount}}
+            <p style="text-align: center; margin-top: 15px; color: #555;">...and
+              {{otherItemsCount}}
+              other item(s).</p>
+          {{/if}}
+        </div>
+
+        <table class="order-summary">
+          <tbody>
+            <tr class="total-row">
+              <td>TOTAL</td>
+              <td
+                style="text-align: right; color: #007bff;"
+              >{{finalAmount}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="{{orderLink}}" class="button">View Order Details</a>
+        </p>
+
+      </div>
+      <div class="footer">
+        <p>©copy; 2025 PawPal. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

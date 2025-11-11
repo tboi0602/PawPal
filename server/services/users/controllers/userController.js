@@ -1,11 +1,12 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import { put, del } from "@vercel/blob";
+import mongoose from "mongoose";
 
 //* GET USER
 export const getUser = async (req, res) => {
   const { id } = req.params;
-  const page = parseInt(req.query.page);
+  const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit);
   const roleFilter = req.query.role;
   const nameSearch = req.query.search;
@@ -19,6 +20,15 @@ export const getUser = async (req, res) => {
       if (nameSearch) {
         findQuery.name = { $regex: nameSearch, $options: "i" };
       }
+      if (!limit) {
+        const users = await User.find({});
+        if (!users || users.length == 0)
+          return res
+            .status(404)
+            .json({ success: false, message: "User not found" });
+        return res.status(200).json({ success: true, users: users });
+      }
+
       const totalUsers = await User.countDocuments(findQuery);
       if (totalUsers === 0) {
         return res
@@ -37,12 +47,24 @@ export const getUser = async (req, res) => {
         users: users,
       });
     } else {
-      const user = await User.findById(id).lean();
-      if (!user)
+      const result = await User.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(id) } },
+        {
+          $lookup: {
+            from: "pets",
+            localField: "_id",
+            foreignField: "userId",
+            as: "pets",
+          },
+        },
+      ]);
+      const user = result[0];
+      if (!user) {
         return res
           .status(404)
           .json({ success: false, message: "User not found" });
-      return res.status(200).json({ success: true, user: user });
+      }
+      return res.status(200).json({ success: true, user });
     }
   } catch (error) {
     return res

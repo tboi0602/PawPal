@@ -73,25 +73,11 @@ app.delete("/users/:id", verifyAuth, checkRole(["ADMIN"]), deleteUser);
 //router pets
 app.get("/users/:userId/pets/:id", verifyAuth, getPet);
 app.get("/users/:userId/pets", verifyAuth, getPet);
-app.post(
-  "/users/:userId/pets",
-  upload.single("image"),
-  verifyAuth,
-  checkRole(["CUSTOMER", "STAFF"]),
-  addPet
+app.post("/users/:userId/pets",upload.single("image"),verifyAuth,checkRole(["CUSTOMER", "STAFF"]),addPet
 );
-app.put(
-  "/users/:userId/pets/:id",
-  upload.single("image"),
-  verifyAuth,
-  checkRole(["CUSTOMER", "STAFF"]),
-  updatePet
+app.put("/users/:userId/pets/:id",upload.single("image"),verifyAuth,checkRole(["CUSTOMER", "STAFF"]),updatePet
 );
-app.delete(
-  "/users/:userId/pets/:id",
-  verifyAuth,
-  checkRole(["CUSTOMER", "STAFF"]),
-  deletePet
+app.delete("/users/:userId/pets/:id",verifyAuth,checkRole(["CUSTOMER", "STAFF"]),deletePet
 );
 
 //run service
