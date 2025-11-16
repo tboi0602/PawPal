@@ -23,14 +23,14 @@ const promotionSchema = new mongoose.Schema(
     endDate: { type: Date, required: true },
     status: {
       type: String,
-      enum: ["upcoming", "active", "expired"],
+      enum: ["upcoming", "active", "expired", "fully_used"],
       default: "upcoming",
     },
     usageLimit: { type: Number, default: 0, min: 0 },
     usageCount: { type: Number, default: 0, min: 0 },
     rank: {
       type: String,
-      enum: ["All", "Gold", "Diamond", "Platinum"],
+      enum: ["All", "Bronze", "Gold", "Diamond", "Platinum"],
       default: "All",
     },
   },
@@ -38,5 +38,24 @@ const promotionSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Tự động cập nhất status dựa trên ngày hiện tại
+promotionSchema.virtual("currentStatus").get(function () {
+  const now = new Date();
+  const start = this.startDate;
+  const end = this.endDate;
+
+  if (now < start) {
+    return "upcoming";
+  }
+
+  if (this.usageLimit > 0 && this.usageCount >= this.usageLimit) {
+    return "fully_used";
+  }
+  if (now > end) {
+    return "expired";
+  }
+  return "active";
+});
 
 export default mongoose.model("Promotion", promotionSchema);

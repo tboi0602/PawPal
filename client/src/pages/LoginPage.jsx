@@ -50,9 +50,6 @@ export const LoginPage = () => {
         showConfirmButton: false,
         timer: 5000,
         timerProgressBar: true,
-        customClass: {
-          popup: "swal-margin",
-        },
       });
     } catch (error) {
       console.log(error);
@@ -65,15 +62,18 @@ export const LoginPage = () => {
     <>
       {!isClick && (
         <>
-          <div className="flex flex-col justify-between items-center w-full p-5 bg-white">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-2 mb-5 w-full px-40">
+          <div className="flex flex-col justify-start items-center min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-10 bg-gray-50">
+            <div className="flex items-center justify-between gap-2 mb-8 w-full max-w-5xl">
               <div className="cursor-pointer" onClick={() => navigate("/")}>
-                <img src={logo} alt="logo" className="w-36 grayscale" />
+                <img
+                  src={logo}
+                  alt="logo"
+                  className="w-24 sm:w-32 lg:w-36 grayscale"
+                />
               </div>
-              <div className="flex items-center gap-2 text-md border-2 border-gray-400 rounded-md px-2 py-1">
+              <div className="hidden md:flex items-center gap-2 text-md border-2 border-gray-400 rounded-md px-2 py-1">
                 <h1>Don’t have an account?</h1>
-                <div className="border border-r h-10"></div>
+                <div className="border border-r h-6 sm:h-8 md:h-10"></div>
                 <div
                   className="button-black p-2 rounded-lg"
                   onClick={() => navigate("/register")}
@@ -82,42 +82,52 @@ export const LoginPage = () => {
                 </div>
               </div>
             </div>
-
-            {/* Login box */}
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-[866px] flex flex-col lg:flex-row overflow-hidden border border-gray-200">
-              {/* Left image */}
-              <div className="hidden lg:block lg:w-1/2 z-10 h-[550px]">
+            <div className="md:hidden flex justify-center w-full mb-8">
+              <p className="text-sm mr-2">Don’t have an account?</p>
+              <div
+                className="button-black px-3 py-1 text-sm rounded-lg"
+                onClick={() => navigate("/register")}
+              >
+                Register Now
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl flex flex-col lg:flex-row overflow-hidden border border-gray-200">
+              <div className="hidden lg:block lg:w-1/2 z-10 h-96 md:h-[550px]">
                 <img
                   src={imgServices["Beauty"]}
                   alt="login_illustration"
                   className="p-2 rounded-2xl w-full h-full object-cover object-center "
                 />
               </div>
-
               {/* Right form */}
-              <div className="w-full lg:w-1/2 p-6 sm:p-10 bg-white bg-opacity-95 backdrop-blur-sm">
-                <h1 className="text-4xl font-bold mb-8 text-center">Login</h1>
-
+              <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-10 bg-white bg-opacity-95 backdrop-blur-sm">
+                <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center">
+                  Login
+                </h1>
                 {/* Social login */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <a href="">
-                    <button className="flex items-center justify-center font-medium gap-2 border border-gray-400 w-full py-3 rounded-xl bg-white hover:bg-gray-100 transition-all cursor-pointer ">
-                      <img src={googleLogo} alt="Google" className="w-6" />
+                    <button className="flex items-center justify-center font-medium gap-2 border border-gray-300 w-full py-2 sm:py-3 rounded-xl bg-white hover:bg-gray-100 transition-all cursor-pointer text-sm sm:text-base">
+                      <img
+                        src={googleLogo}
+                        alt="Google"
+                        className="w-5 sm:w-6"
+                      />
                       Login with Google
                     </button>
                   </a>
                 </div>
-
-                <div className="flex items-center my-4">
+                <div className="flex items-center my-3 sm:my-4">
                   <div className="flex-1 h-px bg-gray-300"></div>
-                  <span className="mx-4 text-sm text-gray-500">or</span>
+                  <span className="mx-3 text-xs sm:text-sm text-gray-500">
+                    or
+                  </span>
                   <div className="flex-1 h-px bg-gray-300"></div>
                 </div>
-
                 {/* Form */}
                 <form
                   onSubmit={handleSubmit}
-                  className="flex flex-col gap-3 mt-8"
+                  className="flex flex-col gap-3 sm:gap-4 mt-4"
                 >
                   <InputForm
                     placeholder="Email"
@@ -136,17 +146,15 @@ export const LoginPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <p className="text-sm text-red-600">{error}</p>
-
                   <button
                     type="submit"
-                    className="button-black p-3 rounded-lg flex items-center justify-center"
+                    className="button-black p-2 sm:p-3 rounded-lg flex items-center justify-center text-sm sm:text-base"
                     disabled={isLoading}
                   >
                     {isLoading ? <Loader2 /> : "Login"}
                   </button>
-
                   <p
-                    className=" text-sm text-left text-gray-700 underline hover:text-black cursor-pointer"
+                    className="text-xs sm:text-sm text-left text-gray-700 underline hover:text-black cursor-pointer"
                     onClick={() => setIsClick(true)}
                   >
                     Forgot password?
@@ -157,7 +165,6 @@ export const LoginPage = () => {
           </div>
         </>
       )}
-
       {/* Forgot Password Modal */}
       {isClick && <ForgotPasswordModel setIsClick={setIsClick} />}
     </>

@@ -83,13 +83,16 @@ export const AdminCustomerPage = () => {
   };
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Title & Search Bar  */}
-      <div className="flex items-center justify-between w-full pt-10">
-        <h1 className="text-4xl font-bold text-black">Manager Customer</h1>
-        <div className="flex w-2/3 gap-4 justify-end items-center">
+    <div className="flex flex-col gap-8 p-4 md:p-10">
+      {/* Title & Search Bar - Responsive Flex Direction & Width */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pt-4 md:pt-10 gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-black shrink-0">
+          Manager Customer
+        </h1>
+        {/* Responsive Search Container */}
+        <div className="flex w-full md:w-2/3 lg:w-1/2 gap-4 justify-start md:justify-end items-center">
           {/* Search Input */}
-          <div className="w-2/3 relative flex justify-center items-center">
+          <div className="w-full relative flex justify-center items-center">
             <InputForm
               Icon={Search}
               placeholder="Search user..."
@@ -110,38 +113,39 @@ export const AdminCustomerPage = () => {
         </div>
       </div>
 
-      {/* Product Table */}
+      {/* Product Table - Responsive Overflow */}
       <div className=" bg-white rounded-xl shadow-md overflow-x-auto border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Header */}
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 No.
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              {/* Tăng min-w cho cột Tên để tránh bị quá nhỏ trên mobile */}
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[120px]">
                 Name
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[150px]">
                 Email
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 Phone Number
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
                 Loyalty Points
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
-                address
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right min-w-[150px]">
+                Address
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                 Operator
               </th>
             </tr>
           </thead>
 
-          {/* Table Body */}
-          <tbody className="bg-white divide-y divide-gray-100 text-gray-700">
+          {/* Table Body - Dùng text-sm cho nội dung để dễ đọc hơn */}
+          <tbody className="bg-white divide-y divide-gray-100 text-gray-700 text-sm">
             {users &&
               users.length > 0 &&
               users.map((user, index) => (
@@ -149,34 +153,34 @@ export const AdminCustomerPage = () => {
                   key={user?._id}
                   className="hover:bg-gray-50 transition duration-150"
                 >
-                  <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
+                  <td className="px-3 py-3 whitespace-nowrap font-medium text-left">
                     {((currentPage > 0 ? currentPage : 1) - 1) * pageSize +
                       index +
                       1}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
+                  <td className="px-3 py-3 whitespace-nowrap font-medium text-left">
                     {user?.name}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left">
+                  <td className="px-3 py-3 whitespace-nowrap text-left">
                     {user?.email}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left">
+                  <td className="px-3 py-3 whitespace-nowrap text-left">
                     {user?.phone || "___"}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right">
+                  <td className="px-3 py-3 whitespace-nowrap text-right">
                     {user?.loyaltyPoints || 0}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right">
+                  <td className="px-3 py-3 whitespace-nowrap text-right">
                     {user?.address?.[0] || "___"}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-4">
+                  <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-3">
                       <SquarePen
-                        className="w-4 cursor-pointer text-gray-500 hover:text-black duration-150"
+                        className="w-4 h-4 cursor-pointer text-gray-500 hover:text-black duration-150"
                         onClick={() => handleEdit(user?._id)}
                       />
                       <Eye
-                        className="w-4 cursor-pointer text-gray-500 hover:text-blue-600 duration-150"
+                        className="w-4 h-4 cursor-pointer text-gray-500 hover:text-blue-600 duration-150"
                         onClick={() => handleSee(user?._id)}
                       />
                     </div>
@@ -186,10 +190,10 @@ export const AdminCustomerPage = () => {
           </tbody>
         </table>
         {users.length == 0 && (
-          <p className="text-center text-red-600 p-2 text-lg">{message}</p>
+          <p className="text-center text-red-600 p-4 text-lg">{message}</p>
         )}
         {isLoading && (
-          <div className="w-full flex justify-center items-center">
+          <div className="w-full flex justify-center items-center py-4">
             <Loader />
           </div>
         )}

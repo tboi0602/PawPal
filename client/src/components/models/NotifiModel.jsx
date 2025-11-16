@@ -21,7 +21,7 @@ const notificationStyleMap = {
   },
 };
 
-export const NotifiModel = ({ reloadNotifications }) => {
+export const NotifiModel = ({ loadHeader }) => {
   const [notifications, setNotifications] = useState([]);
   const [notification, setNotification] = useState({});
   const [openDetails, setOpenDetails] = useState(false);
@@ -31,7 +31,7 @@ export const NotifiModel = ({ reloadNotifications }) => {
 
   useEffect(() => {
     setNotifications(
-      getItem("notifications").sort((a, b) => a.read - b.read) || []
+      getItem("notifications")?.sort((a, b) => a.read - b.read) || []
     );
   }, []);
 
@@ -53,7 +53,7 @@ export const NotifiModel = ({ reloadNotifications }) => {
     );
 
     setNotification({ ...n, read: true });
-    reloadNotifications();
+    loadHeader();
   };
 
   const handelClose = (e) => {
@@ -65,7 +65,7 @@ export const NotifiModel = ({ reloadNotifications }) => {
 
   return (
     <>
-      <div className="absolute w-72 max-h-64 overflow-y-auto top-10 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-2 z-50">
+      <div className="absolute w-72 max-h-64 overflow-y-auto top-12 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-2 z-50">
         {notifications.length === 0 ? (
           <p className="text-gray-500 text-center text-sm py-2">
             No notifications

@@ -38,62 +38,87 @@ export const ForgotPasswordPage = () => {
   }, []);
 
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+    let timer;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    }
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  useEffect(() => {
-    if (hasRunRef.current) return;
-    hasRunRef.current = true;
-    if (!email || !token) {
-      setSuccess(false);
-      setMessage("The activation link is invalid. Please check again.");
-      return;
-    }
-    const loadData = async () => {
-      try {
-        const data = await changePassword(email, token);
-        if (!data.success) {
-          setSuccess(false);
-          setMessage(data.message);
-        }
-      } catch (err) {
-        setSuccess(false);
-        setMessage(err.message);
-      }
-    };
-    loadData();
-  }, []);
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+  };
 
-  const handleChangePassword = async () => {
+  const handleResendRecovery = async () => {
+    if (!email || cooldown > 0) return;
     setIsLoading(true);
-    if (!newPassword) {
-      setIsLoading(false);
-      setMessage("Please enter new pasword");
-      return;
-    }
-    if (!validatePassword(newPassword)) {
-      setIsLoading(false);
-      setMessage("Password must contain the characters a-z, A-Z, 0-9, !@#...");
-      return;
-    }
 
     try {
-      const data = await changePassword(email, token, newPassword);
-      if (!data.success) {
-        setIsLoading(false);
-        setSuccess(false);
-        setMessage(data.message);
-        return;
-      }
-      setSuccess(true);
-      setMessage(data.message);
+      const dataRes = await requiredChangePassword(email);
       Swal.fire({
         toast: true,
         position: "bottom-right",
-        icon: "success",
-        title: data.message,
+        icon: dataRes.success ? "success" : "error",
+        title: dataRes.message,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: "swal-margin",
+        },
+      });
+      if (dataRes.success) {
+        setCooldown(COOLDOWN_TIME);
+        localStorage.setItem(LOCAL_STORAGE_KEY, Date.now().toString());
+      }
+    } catch (error) {
+      Swal.fire({
+        toast: true,
+        position: "bottom-right",
+        icon: "error",
+        title: "An error occurred during resend.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: "swal-margin",
+        },
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPassword || !email || !token) {
+      Swal.fire({
+        toast: true,
+        position: "bottom-right",
+        icon: "error",
+        title: "Missing fields.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: "swal-margin",
+        },
+      });
+      return;
+    }
+
+    const isValid = validatePassword(newPassword);
+    if (!isValid) {
+      Swal.fire({
+        toast: true,
+        position: "bottom-right",
+        icon: "error",
+        title:
+          "Password must be at least 8 characters, include an uppercase letter, a number, and a special character.",
         showConfirmButton: false,
         timer: 5000,
         timerProgressBar: true,
@@ -101,94 +126,96 @@ export const ForgotPasswordPage = () => {
           popup: "swal-margin",
         },
       });
-    } catch (err) {
-      setIsLoading(false);
-      setSuccess(false);
-      setMessage(err.message);
-    } finally {
-      setIsLoading(false);
+      return;
     }
-  };
 
-  const handleResendRecovery = async () => {
     setIsLoading(true);
-    if (cooldown > 0) return;
     try {
-      const data = await requiredChangePassword(email);
-      if (data.success) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, Date.now().toString());
-        setCooldown(COOLDOWN_TIME);
+      const dataRes = await changePassword(email, token, newPassword);
+      if (dataRes.success) {
+        setSuccess(true);
+        setMessage(dataRes.message);
+        setNewPassword("");
       } else {
-        setIsLoading(false);
+        setSuccess(false);
+        setMessage(dataRes.message);
       }
-      setMessage(data.message);
-      Swal.fire({
-        toast: true,
-        position: "bottom-right",
-        icon: data.success ? "success" : "error",
-        title: data.message,
-        showConfirmButton: false,
-        timer: 5000,
-        timerProgressBar: true,
-        customClass: { popup: "swal-margin" },
-      });
-    } catch (err) {
-      setIsLoading(false);
-      setMessage(err.message);
+    } catch (error) {
+      setSuccess(false);
+      setMessage("An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  useEffect(() => {
+    if (hasRunRef.current) return;
+    if (email && token) {
+      hasRunRef.current = true;
+      // Nếu có email và token, coi như thành công bước 1 và cho người dùng nhập mật khẩu mới
+      setSuccess(null); // Trạng thái form nhập
+    } else {
+      // Nếu không có email hoặc token, coi như thất bại và cho phép resend
+      setSuccess(false);
+      setMessage(
+        "Invalid recovery link. Please resend the link or check your email."
+      );
+      hasRunRef.current = true;
+    }
+  }, [email, token]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      {" "}
-      {success == null ? (
-        <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center border-black">
-          <h1 className="text-3xl font-bold text-black mb-6">
-            Change Password
+    // Responsive: Căn giữa màn hình và đảm bảo chiều cao tối thiểu là 100vh
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      {success === null ? (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full border-black"
+        >
+          <h1 className="text-3xl font-bold text-black mb-6 text-center">
+            New Password
           </h1>
-
-          <div className="flex flex-col gap-2">
-            <InputForm
-              Icon={Lock}
-              name="newPassword"
-              type="password"
-              value={newPassword}
-              placeholder={"New password"}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <p className="text-red-600 w-full text-left">{message}</p>{" "}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-black">
+                New Password
+              </label>
+              <InputForm
+                type="password"
+                name="newPassword"
+                value={newPassword}
+                Icon={Lock}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            {message && (
+              <p className="text-sm font-medium text-red-500 text-center">
+                {message}
+              </p>
+            )}
             <button
-              className="w-full bg-black text-white py-3 rounded-lg font-bold 
-              hover:bg-gray-800 transition duration-300 cursor-pointer
-              disabled:bg-gray-500 disabled:cursor-not-allowed"
-              onClick={handleChangePassword}
-              disabled={isLoading}
+              type="submit"
+              disabled={isLoading || !newPassword}
+              className={`w-full p-3 mt-4 rounded-xl text-xl font-bold transition duration-200 bg-black text-white 
+            hover:bg-neutral-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500`}
             >
               {isLoading ? (
-                <div className="flex w-full justify-center items-center">
+                <div className="flex justify-center items-center">
                   <Loader2 />
                 </div>
               ) : (
-                "Confirm"
+                "Change Password"
               )}
             </button>
           </div>
-        </div>
-      ) : success == false ? (
+        </form>
+      ) : success === false ? (
         <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center border-black">
-          <h1 className="text-3xl font-bold text-red-600 mb-6">Error</h1>{" "}
+          <h1 className="text-3xl font-bold text-red-600 mb-6">
+            Password Recovery Failed
+          </h1>
           <div className="flex flex-col items-center">
-            <XCircle className="w-16 h-16 text-red-500 mb-4" />{" "}
+            <XCircle className="w-16 h-16 text-red-500 mb-4" />
             <p className="text-lg font-semibold text-red-700 mb-6">{message}</p>
             <button
               className={`w-full p-3 rounded-xl font-bold transition duration-300 ${
@@ -219,13 +246,15 @@ export const ForgotPasswordPage = () => {
             <p className="text-lg font-semibold text-green-700 mb-6">
               {message}
             </p>
-
-            <a className="button-black w-full p-3 rounded-xl" href="/login">
-              Login
+            <a
+              href="/login"
+              className="w-full p-3 rounded-xl font-bold transition duration-300 bg-black text-white hover:bg-gray-800 cursor-pointer"
+            >
+              Go to Login
             </a>
           </div>
         </div>
-      )}{" "}
+      )}
     </div>
   );
 };

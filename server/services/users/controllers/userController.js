@@ -18,7 +18,14 @@ export const getUser = async (req, res) => {
         findQuery.role = roleFilter;
       }
       if (nameSearch) {
-        findQuery.name = { $regex: nameSearch, $options: "i" };
+        // Search by name or by ID
+        const searchQuery = [];
+        searchQuery.push({ name: { $regex: nameSearch, $options: "i" } });
+        try {
+          searchQuery.push({ _id: new mongoose.Types.ObjectId(nameSearch) });
+        } catch (error) {
+        }
+        findQuery.$or = searchQuery;
       }
       if (!limit) {
         const users = await User.find({});

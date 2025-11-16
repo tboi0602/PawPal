@@ -4,21 +4,24 @@ import { Footer } from "./main/Footer";
 import { Header } from "./main/Header";
 import { ActivateModel } from "../../models/ActivateModel";
 import { getNotificationsForUser } from "../../../services/notifications/notificationAPI";
-
+import { getCart } from "../../../services/shopping/cartAPI";
 export const Layout = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
+  const [numberItems, setNumberItems] = useState([]);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     document.title = "PawPal | Home";
   }, []);
 
-  const loadNotifications = useCallback(async (userId) => {
+  const loadHeader = useCallback(async (userId) => {
     if (!userId) return;
 
     const data = await getNotificationsForUser(userId);
-    if (data.success) {
-      setNotifications(data.notifications);
+    const data2 = await getCart();
+    if (data.success || data2.success) {
+      setNumberItems(data2.pagination.totalItems || []);
+      setNotifications(data.notifications || []);
     }
   }, []);
 
@@ -28,12 +31,12 @@ export const Layout = ({ children }) => {
       setUser(userData);
 
       if (userData._id) {
-        loadNotifications(userData._id);
+        loadHeader(userData._id);
       }
     } else {
       setNotifications([]);
     }
-  }, [loadNotifications]);
+  }, [loadHeader]);
 
   useEffect(() => {
     setItem("notifications", notifications);
@@ -43,8 +46,9 @@ export const Layout = ({ children }) => {
     <>
       <Header
         name={user?.name}
-        numberUnread={notifications.filter((item) => !item.read).length}
-        reloadNotifications={() => loadNotifications(user?._id)}
+        numberUnread={notifications?.filter((item) => !item.read).length}
+        numberItems={numberItems}
+        reloadHeader={() => loadHeader(user?._id)}
       />
       {!user?.isActivate && user && <ActivateModel email={user.email} />}
       <main className="grow p-4">{children}</main>

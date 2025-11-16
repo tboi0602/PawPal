@@ -4,21 +4,7 @@ import Verify from "../models/Verify.js";
 import crypto from "crypto";
 import { CLIENT_TARGET } from "../../../configs/config.js";
 import { sendEmail } from "./sendEmail.js";
-const validatePassword = (password) => {
-  const minLength = /.{8,}/;
-  const uppercase = /(?=.*[A-Z])/;
-  const lowercase = /(?=.*[a-z])/;
-  const number = /(?=.*\d)/;
-  const specialChar = /(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>/?~`])/;
-
-  return (
-    minLength.test(password) &&
-    uppercase.test(password) &&
-    lowercase.test(password) &&
-    number.test(password) &&
-    specialChar.test(password)
-  );
-};
+import { validatePassword } from "../../../utils/validate.js";
 //! Register
 export const handleRegister = async (req, res) => {
   const dataRegister = req.body;

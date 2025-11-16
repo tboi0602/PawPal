@@ -1,12 +1,11 @@
-// components/Pagination.jsx
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Pagination = ({
-  totalItems, 
-  totalPages, 
-  currentPage, 
-  onPageChange, 
-  itemsPerPage, 
+  totalItems,
+  totalPages,
+  currentPage,
+  onPageChange,
+  itemsPerPage,
 }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -14,7 +13,6 @@ const Pagination = ({
   const displayedStart = Math.min(startIndex + 1, totalItems);
   const displayedEnd = Math.min(endIndex, totalItems);
 
-  // Hide if no items
   if (totalItems === 0) {
     return null;
   }
@@ -38,7 +36,7 @@ const Pagination = ({
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-between p-4 bg-white border-t border-gray-100 rounded-b-xl">
-      <div className="mb-4 md:mb-0 text-sm text-gray-600">
+      <div className="mb-4 md:mb-0 text-sm text-gray-600 text-center md:text-left">
         Showing{" "}
         <span className="font-semibold text-gray-800">{displayedStart}</span> to{" "}
         <span className="font-semibold text-gray-800">{displayedEnd}</span> of{" "}
@@ -59,8 +57,7 @@ const Pagination = ({
             <span className="ml-1 hidden sm:inline">Previous</span>
           </button>
 
-          <div className="flex space-x-2 overflow-x-auto">
-            {" "}
+          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto max-w-full md:max-w-none">
             {pagesToShow.map((page) => (
               <button
                 key={page}

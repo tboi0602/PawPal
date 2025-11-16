@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import Product from "../models/product/Product.js";
+import Review from "../models/product/Review.js";
 import { put, del } from "@vercel/blob";
 
 //* GET Product
@@ -22,7 +24,29 @@ export const getProduct = async (req, res) => {
           .status(404)
           .json({ success: false, message: "Product not found" });
       }
-      return res.status(200).json({ success: true, product: product });
+
+      const reviews = await Review.aggregate([
+        { $match: { productId: new mongoose.Types.ObjectId(id) } },
+        {
+          $group: {
+            _id: null,
+            avgRating: { $avg: "$rate" },
+            reviewCount: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const avgRating = reviews[0]?.avgRating || 0;
+      const reviewCount = reviews[0]?.reviewCount || 0;
+
+      return res.status(200).json({
+        success: true,
+        product: {
+          ...product,
+          avgRating: Math.round(avgRating * 10) / 10,
+          reviewCount,
+        },
+      });
     }
 
     const findQuery = {};
@@ -43,7 +67,7 @@ export const getProduct = async (req, res) => {
     }
 
     if (Object.keys(priceRange).length > 0) {
-      findQuery.price = priceRange;
+      findQuery.discountPrice = priceRange;
     }
     const totalProduct = await Product.countDocuments(findQuery);
     if (totalProduct === 0) {
@@ -52,11 +76,34 @@ export const getProduct = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    const products = await Product.find(findQuery)
+    let products = await Product.find(findQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    // Enrich products with average rating and review count
+    products = await Promise.all(
+      products.map(async (product) => {
+        const reviews = await Review.aggregate([
+          { $match: { productId: new mongoose.Types.ObjectId(product._id) } },
+          {
+            $group: {
+              _id: null,
+              avgRating: { $avg: "$rate" },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ]);
+        const avgRating = reviews[0]?.avgRating || 0;
+        const reviewCount = reviews[0]?.reviewCount || 0;
+        return {
+          ...product,
+          avgRating: Math.round(avgRating * 10) / 10,
+          reviewCount,
+        };
+      })
+    );
 
     return res.status(200).json({
       success: true,

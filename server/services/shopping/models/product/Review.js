@@ -2,7 +2,11 @@ import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema(
   {
-    userId: { type: String, require: true },
+    user: {
+      id: { type: String, require: true },
+      name: { type: String, require: true },
+      image: { type: String, require: true },
+    },
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
@@ -10,7 +14,6 @@ const reviewSchema = new mongoose.Schema(
     },
     comment: { type: String, require: true },
     rate: { type: Number, require: true },
-
   },
   {
     toJSON: { virtuals: true },

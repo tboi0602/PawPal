@@ -3,7 +3,7 @@ import morgan from "morgan";
 import mongoose from "mongoose";
 import multer from "multer";
 
-import { checkRole, verifyAuth } from "../middlewares/authRequired.js";
+import { checkRole, checkUser, verifyAuth } from "../middlewares/authRequired.js";
 import { USER_PORT, MONGO_USER_URI } from "../../configs/config.js";
 import {
   getUser,
@@ -64,20 +64,20 @@ app.post("/users/required-change-password", ChangePasswordRequired);
 app.post("/users/forgot-password", handleChangePassword);
 
 //router users
-app.get("/users", verifyAuth, checkRole(["ADMIN"]), getUser);
-app.get("/users/:id", verifyAuth, getUser);
-app.post("/users", verifyAuth, checkRole(["ADMIN"]), addUser);
+app.get("/users", verifyAuth, checkRole(["ADMIN","STAFF"]), getUser);
+app.get("/users/:id", verifyAuth,checkUser, getUser);
+app.post("/users", verifyAuth, checkRole(["ADMIN"]), addUser); // Tạo STAFF
 app.put("/users/:id", upload.single("image"), verifyAuth, updateUser);
 app.delete("/users/:id", verifyAuth, checkRole(["ADMIN"]), deleteUser);
 
 //router pets
 app.get("/users/:userId/pets/:id", verifyAuth, getPet);
 app.get("/users/:userId/pets", verifyAuth, getPet);
-app.post("/users/:userId/pets",upload.single("image"),verifyAuth,checkRole(["CUSTOMER", "STAFF"]),addPet
+app.post("/users/:userId/pets",upload.single("image"),verifyAuth,checkUser,checkRole(["CUSTOMER", "STAFF"]),addPet
 );
-app.put("/users/:userId/pets/:id",upload.single("image"),verifyAuth,checkRole(["CUSTOMER", "STAFF"]),updatePet
+app.put("/users/:userId/pets/:id",upload.single("image"),verifyAuth,checkUser,checkRole(["CUSTOMER", "STAFF"]),updatePet
 );
-app.delete("/users/:userId/pets/:id",verifyAuth,checkRole(["CUSTOMER", "STAFF"]),deletePet
+app.delete("/users/:userId/pets/:id",verifyAuth,checkUser,checkRole(["CUSTOMER", "STAFF"]),deletePet
 );
 
 //run service

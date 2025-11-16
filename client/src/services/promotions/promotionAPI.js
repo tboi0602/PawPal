@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000/api-promotion";
+const BASE_URL = "http://localhost:5000/api-shopping";
 export async function getPromotions(
   page = 1,
   limit = 10,

@@ -1,7 +1,7 @@
 export const HomePage = () => {
   return (
-    <>
-      <h1 className="text-center text-2xl mt-50">HOME PAGE</h1>
-    </>
+    <div className="h-screen w-full">
+      <div className="text-center p-24">HOMEPAGE</div>
+    </div>
   );
 };

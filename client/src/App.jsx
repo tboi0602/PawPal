@@ -8,6 +8,7 @@ import { AdminStaffPage } from "./pages/AdminStaffPage";
 import { AdminProductPage } from "./pages/AdminProductPage";
 import { AdminPromotionPage } from "./pages/AdminPromotionPage";
 import { AdminNotificationPage } from "./pages/AdminNotificationPage";
+import { AdminOrderPage } from "./pages/AdminOrderPage";
 
 import { HomePage } from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -21,6 +22,13 @@ import { ProtectedRoute } from "./components/layouts/admin/ProtectedRoute";
 import { Layout } from "./components/layouts/customer/Layout";
 import { LayoutAdmin } from "./components/layouts/admin/LayoutAdmin";
 import { PetPage } from "./pages/PetPage";
+import { ProductPage } from "./pages/ProductPage";
+import { ProductDetailsPage } from "./pages/ProductDetailsPage";
+import { ProductPaymentPage } from "./pages/ProductPaymentPage";
+import { StatusPage } from "./pages/StatusPage";
+import { OrderPage } from "./pages/OrderPage";
+import { CartPage } from "./pages/CartPage";
+import { PromotionPage } from "./pages/PromotionPage";
 
 function App() {
   return (
@@ -59,6 +67,14 @@ function App() {
           }
         />
         <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute
+              children={<LayoutAdmin children={<AdminOrderPage />} />}
+            />
+          }
+        />
+        <Route
           path="/admin/promotions"
           element={
             <ProtectedRoute
@@ -81,8 +97,28 @@ function App() {
 
         <Route path="/home">
           <Route index element={<Layout children={<HomePage />} />} />
-          <Route path="me" element={<Layout children={<ProfilePage />} />}/>
-          <Route path="pets" element={<Layout children={<PetPage />} />}/>
+          <Route path="products">
+            <Route index element={<Layout children={<ProductPage />} />} />
+            <Route
+              path="product-details"
+              element={<Layout children={<ProductDetailsPage />} />}
+            />
+          </Route>
+          <Route path="payment">
+            <Route
+              index
+              element={<Layout children={<ProductPaymentPage />} />}
+            />
+            <Route
+              path="status"
+              element={<Layout children={<StatusPage />} />}
+            />
+          </Route>
+          <Route path="orders" element={<Layout children={<OrderPage />} />} />
+          <Route path="cart" element={<Layout children={<CartPage />} />} />
+          <Route path="promotions" element={<Layout children={<PromotionPage />} />} />
+          <Route path="me" element={<Layout children={<ProfilePage />} />} />
+          <Route path="pets" element={<Layout children={<PetPage />} />} />
         </Route>
 
         <Route path="/activate" element={<ActivatePage />} />

@@ -1,5 +1,7 @@
+const BASE_URL = "http://localhost:5000/api-shopping/products";
 export async function getProducts(
   page = 1,
+  limit = 10,
   search = "",
   category = "",
   min = 0,
@@ -7,7 +9,7 @@ export async function getProducts(
 ) {
   const queryParams = {
     page: page,
-    limit: 10,
+    limit: limit,
   };
   if (search !== "") {
     queryParams.search = search;
@@ -24,52 +26,40 @@ export async function getProducts(
 
   const queryString = new URLSearchParams(queryParams).toString();
 
-  const res = await fetch(
-    `http://localhost:5000/api-shopping/products?${queryString}`,
-    {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    }
-  );
+  const res = await fetch(`${BASE_URL}?${queryString}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   return res.json();
 }
 
 export async function getProduct(productId) {
-  const res = await fetch(
-    `http://localhost:5000/api-shopping/products/${productId}`,
-    {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    }
-  );
+  const res = await fetch(`${BASE_URL}/${productId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   return res.json();
 }
 export async function editProduct(productId, updateData) {
-  const res = await fetch(
-    `http://localhost:5000/api-shopping/products/${productId}`,
-    {
-      method: "PUT",
-      credentials: "include",
-      body: updateData,
-    }
-  );
+  const res = await fetch(`${BASE_URL}/${productId}`, {
+    method: "PUT",
+    credentials: "include",
+    body: updateData,
+  });
   return res.json();
 }
 export async function deleteProduct(productId) {
-  const res = await fetch(
-    `http://localhost:5000/api-shopping/products/${productId}`,
-    {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    }
-  );
+  const res = await fetch(`${BASE_URL}/${productId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   return res.json();
 }
 export async function addProduct(formData) {
-  const res = await fetch(`http://localhost:5000/api-shopping/products`, {
+  const res = await fetch(`${BASE_URL}`, {
     method: "POST",
     credentials: "include",
     body: formData,

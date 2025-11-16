@@ -10,9 +10,10 @@ import {
   USER_TARGET,
   INDENTITY_TARGET,
   SHOPPING_TARGET,
-  PROMOTION_TARGET,
   EMAIL_TARGET,
   NOTIFICATION_TARGET,
+  PAYMENT_TARGET,
+  SOLUTIONS_TARGET,
 } from "../configs/config.js";
 
 import { verifyAuth } from "../middlewares/authRequired.js";
@@ -26,6 +27,18 @@ app.use(
 );
 app.use(morgan("tiny"));
 app.use(cookieParser());
+
+// Debug middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api-solution")) {
+    console.log(
+      `[DEBUG] ${req.method} ${
+        req.path
+      } → ${SOLUTIONS_TARGET}${req.path.replace("/api-solution", "")}`
+    );
+  }
+  next();
+});
 
 app.use(
   "/api-auth",
@@ -53,15 +66,7 @@ app.use(
     pathRewrite: { "^/api-shopping": "" },
   })
 );
-app.use(
-  "/api-promotion",
-  verifyAuth,
-  createProxyMiddleware({
-    target: PROMOTION_TARGET,
-    changeOrigin: true,
-    pathRewrite: { "^/api-promotion": "" },
-  })
-);
+
 app.use(
   "/api-email",
   createProxyMiddleware({
@@ -77,6 +82,24 @@ app.use(
     target: NOTIFICATION_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api-notification": "" },
+  })
+);
+app.use(
+  "/api-payment",
+  verifyAuth,
+  createProxyMiddleware({
+    target: PAYMENT_TARGET,
+    changeOrigin: true,
+    pathRewrite: { "^/api-payment": "" },
+  })
+);
+app.use(
+  "/api-solution",
+  verifyAuth,
+  createProxyMiddleware({
+    target: SOLUTIONS_TARGET,
+    changeOrigin: true,
+    pathRewrite: { "^/api-solution": "" },
   })
 );
 app.listen(GATEWAY_PORT, () =>

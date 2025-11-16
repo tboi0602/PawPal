@@ -8,6 +8,7 @@ import {
   Percent,
   Filter,
   Clock,
+  ChevronDown, // Thêm icon ChevronDown cho dropdown
 } from "lucide-react";
 //components
 import Pagination from "../components/buttons/Pagination";
@@ -51,6 +52,10 @@ export const AdminPromotionPage = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // State cho dropdown
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 
   // Load promotions with filtering and sorting
   const loadPromotions = useCallback(
@@ -98,6 +103,12 @@ export const AdminPromotionPage = () => {
     [statusFilter, pageSize, sortBy]
   );
 
+  // Hàm chuyên dùng để reload lại trang hiện tại sau khi thêm, sửa, xóa
+  const reloadCurrentPage = useCallback(async () => {
+    // Đảm bảo reload ở trang 1 nếu kết quả tìm kiếm/lọc thay đổi
+    await loadPromotions(currentPage, debounceSearch);
+  }, [currentPage, debounceSearch, loadPromotions]);
+
   // Load initial data
   useEffect(() => {
     loadPromotions(1, "");
@@ -112,6 +123,7 @@ export const AdminPromotionPage = () => {
 
   // Handle filter changes
   useEffect(() => {
+    // Luôn quay về trang 1 khi filter hoặc sort thay đổi
     loadPromotions(1, debounceSearch);
   }, [statusFilter, sortBy, loadPromotions, debounceSearch]);
 
@@ -123,7 +135,6 @@ export const AdminPromotionPage = () => {
     }
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -131,7 +142,6 @@ export const AdminPromotionPage = () => {
     }).format(amount);
   };
 
-  // Get promotion status
   const getPromotionStatus = (promotion) => {
     const now = new Date();
     const start = new Date(promotion.startDate);
@@ -148,7 +158,6 @@ export const AdminPromotionPage = () => {
     }
   };
 
-  // Handlers
   const handleAdd = () => {
     setOpenAdd(true);
   };
@@ -191,7 +200,7 @@ export const AdminPromotionPage = () => {
           return;
         }
 
-        await loadPromotions(currentPage);
+        await reloadCurrentPage();
         Swal.fire({
           toast: true,
           position: "bottom-right",
@@ -215,6 +224,44 @@ export const AdminPromotionPage = () => {
     }
   };
 
+  // Hàm chọn Filter
+  const handleStatusFilterChange = (status) => {
+    setStatusFilter(status);
+    setIsFilterDropdownOpen(false);
+  };
+
+  // Hàm chọn Sort By
+  const handleSortByChange = (sortOption) => {
+    setSortBy(sortOption);
+    setIsSortDropdownOpen(false);
+  };
+
+  // --- Render Component ---
+
+  // Dữ liệu cho Status Filter Dropdown
+  const statusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "active", label: "Active" },
+    { value: "expired", label: "Expired" },
+    { value: "upcoming", label: "Upcoming" },
+  ];
+
+  // Dữ liệu cho Sort By Dropdown
+  const sortOptions = [
+    { value: "createdAt-desc", label: "Newest First" },
+    { value: "createdAt-asc", label: "Oldest First" },
+    { value: "startDate-asc", label: "Start Date ↑" },
+    { value: "startDate-desc", label: "Start Date ↓" },
+    { value: "endDate-asc", label: "End Date ↑" },
+    { value: "endDate-desc", label: "End Date ↓" },
+  ];
+
+  const currentStatusLabel =
+    statusOptions.find((opt) => opt.value === statusFilter)?.label ||
+    "All Status";
+  const currentSortLabel =
+    sortOptions.find((opt) => opt.value === sortBy)?.label || "Newest First";
+
   return (
     <div className="flex flex-col gap-10">
       {/* Title & Controls */}
@@ -224,23 +271,23 @@ export const AdminPromotionPage = () => {
           Promotions Management
         </h1>
 
-        <div className="flex items-center gap-4">
-          <button
-            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition duration-200 flex items-center gap-2 cursor-pointer"
-            onClick={handleAdd}
-          >
-            <PlusCircle size={20} />
-            New Promotion
-          </button>
-        </div>
+        <button
+          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition duration-200 flex items-center gap-2 cursor-pointer"
+          onClick={handleAdd}
+        >
+          <PlusCircle size={20} />
+          New Promotion
+        </button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* Search */}
-        <div className="relative md:col-span-2">
+      <hr className="border-t border-gray-200" />
+
+      {/* Search and Filters - Đã tối ưu hóa giao diện */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+        {/* Search Input - Thiết kế lại cho đẹp mắt hơn */}
+        <div className="relative w-full md:w-2/5 max-w-lg">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
             size={20}
           />
           <input
@@ -248,7 +295,8 @@ export const AdminPromotionPage = () => {
             placeholder="Search by code or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-0 focus:border-black"
+            // Tăng padding, bo góc, thêm shadow nhẹ và focus border
+            className="w-full pl-12 pr-10 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
           />
           {search && (
             <X
@@ -259,51 +307,102 @@ export const AdminPromotionPage = () => {
           )}
         </div>
 
-        {/* Status Filter */}
-        <div className="relative">
-          <Filter
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-0 focus:border-black appearance-none"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="expired">Expired</option>
-            <option value="upcoming">Upcoming</option>
-          </select>
-        </div>
+        {/* Filters and Sorts - Đã chuyển sang dạng nút Dropdown */}
+        <div className="flex gap-4 w-full md:w-auto justify-end">
+          {/* Status Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsFilterDropdownOpen(!isFilterDropdownOpen);
+                setIsSortDropdownOpen(false); // Đóng dropdown kia
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 transition duration-150 text-gray-700 font-medium"
+            >
+              <Filter size={18} />
+              <span className="hidden sm:inline">Filter: </span>
+              <span className="font-semibold text-black">
+                {currentStatusLabel}
+              </span>
+              <ChevronDown
+                size={16}
+                className={`ml-1 transition-transform ${
+                  isFilterDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
 
-        {/* Sort By */}
-        <div className="relative">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-0 focus:border-black appearance-none"
-          >
-            <option value="createdAt-desc">Newest First</option>
-            <option value="createdAt-asc">Oldest First</option>
-            <option value="startDate-asc">Start Date ↑</option>
-            <option value="startDate-desc">Start Date ↓</option>
-            <option value="endDate-asc">End Date ↑</option>
-            <option value="endDate-desc">End Date ↓</option>
-          </select>
+            {isFilterDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-xl bg-white z-10 border border-gray-200">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleStatusFilterChange(option.value)}
+                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      statusFilter === option.value
+                        ? "bg-blue-50 text-blue-600 font-semibold"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort By Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsSortDropdownOpen(!isSortDropdownOpen);
+                setIsFilterDropdownOpen(false); // Đóng dropdown kia
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 transition duration-150 text-gray-700 font-medium"
+            >
+              <Clock size={18} />
+              <span className="hidden sm:inline">Sort By: </span>
+              <span className="font-semibold text-black">
+                {currentSortLabel}
+              </span>
+              <ChevronDown
+                size={16}
+                className={`ml-1 transition-transform ${
+                  isSortDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
+
+            {isSortDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-xl bg-white z-10 border border-gray-200">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSortByChange(option.value)}
+                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      sortBy === option.value
+                        ? "bg-blue-50 text-blue-600 font-semibold"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Promotion Cards */}
+      <hr className="border-t border-gray-200" />
+
+      {/* Promotion Cards (Giữ nguyên) */}
       {isLoading ? (
         <div className="flex justify-center items-center py-10">
           <Loader />
         </div>
       ) : promotions.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-red-600 text-lg">
-            {message}
-          </p>
+          <p className="text-red-600 text-lg">{message}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -392,14 +491,14 @@ export const AdminPromotionPage = () => {
       {openAdd && (
         <AddPromotionModel
           setOpenAdd={setOpenAdd}
-          reloadPromotions={loadPromotions}
+          reloadPromotions={reloadCurrentPage}
         />
       )}
       {openEdit && (
         <EditPromotionModel
           promotionId={selectedId}
           setOpenEdit={setOpenEdit}
-          reloadPromotions={loadPromotions}
+          reloadPromotions={reloadCurrentPage}
         />
       )}
       {openDetails && (

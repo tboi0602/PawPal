@@ -36,7 +36,8 @@ export const AdminStaffPage = () => {
 
   const loadUser = useCallback(async (page, search) => {
     setIsLoading(true);
-    const dataRes = await getUsers(page, search, "STAFF");
+    // Dùng isStaff = true để chỉ lấy Staff
+    const dataRes = await getUsers(page, search, true);
     if (!dataRes.success) {
       setUsers([]);
       setMessage(dataRes.message);
@@ -54,8 +55,8 @@ export const AdminStaffPage = () => {
       setPageSize(dataRes.pagination.pageSize);
       setCurrentPage(dataRes.pagination.currentPage);
     } catch (error) {
-      setIsLoading(false);
       setMessage(error.message);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -69,16 +70,14 @@ export const AdminStaffPage = () => {
       loadUser(1, debounceSearch);
     }
   }, [debounceSearch, loadUser]);
+
   const handlePageChange = async (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      await loadUser(page, debounceSearch, "STAFF");
+      await loadUser(page, debounceSearch);
     }
   };
 
-  const handleAdd = async () => {
-    setOpenAdd(!openAdd);
-  };
   const handleEdit = async (userId) => {
     setOpenEdit(!openEdit);
     setIdEdit(userId);
@@ -87,52 +86,51 @@ export const AdminStaffPage = () => {
     setOpenDetails(!openDetails);
     setIdDetails(userId);
   };
-  const handleDelete = async (userId) => {
-    const result = await Swal.fire({
-      title: "Deleted this user?",
-      text: "You will not be able to recover this user data!",
+
+  const handleDelete = async (id) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      reverseButtons: true,
-    });
-    if (result.isConfirmed) {
-      const dataRes = await deleteUser(userId);
-      if (!dataRes.success) {
-        Swal.fire({
-          toast: true,
-          position: "bottom-right",
-          icon: "error",
-          title: dataRes.message,
-          showConfirmButton: false,
-          timer: 5000,
-          timerProgressBar: true,
-        });
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const dataRes = await deleteUser(id);
+        if (dataRes.success) {
+          Swal.fire({
+            title: "Deleted!",
+            text: "User has been deleted.",
+            icon: "success",
+          });
+          loadUser(currentPage, debounceSearch);
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: dataRes.message,
+            icon: "error",
+          });
+        }
       }
-      loadUser(currentPage, debounceSearch);
-      Swal.fire({
-        toast: true,
-        position: "bottom-right",
-        icon: "success",
-        title: dataRes.message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
+    });
   };
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8 p-4 md:p-10">
       {/* Title & Search Bar  */}
-      <div className="flex items-center justify-between w-full pt-10">
-        <h1 className="text-4xl font-bold text-black">Manager Staff</h1>
-        <div className="flex w-2/3 gap-4 justify-end items-center">
-          {/* Search Input */}
-          <div className="w-2/3 relative flex justify-center items-center">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pt-4 md:pt-10 gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-black shrink-0">
+          Manager Staff
+        </h1>
+        {/* Responsive Search Container */}
+        <div className="flex w-full md:w-2/3 lg:w-1/2 gap-4 justify-start md:justify-end items-center">
+          <div className="w-full relative flex justify-center items-center">
+            {/* Search Input */}
             <InputForm
               Icon={Search}
-              placeholder="Search user..."
+              placeholder="Search staff..."
               name="search"
               type="text"
               value={search}
@@ -147,49 +145,47 @@ export const AdminStaffPage = () => {
               />
             )}
           </div>
-
+          {/* Add Staff Button */}
           <button
-            className="flex  gap-1 bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
-            onClick={handleAdd}
+            onClick={() => setOpenAdd(true)}
+            className="flex items-center justify-center p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition duration-150 shrink-0 min-w-[120px]"
           >
-            <CirclePlus className="w-5" />
-            New Product
+            <CirclePlus className="w-5 h-5 mr-2" />
+            <span className="hidden sm:inline">Add Staff</span>
           </button>
         </div>
       </div>
 
-      {/* Product Table */}
+      {/* Staff Table */}
       <div className=" bg-white rounded-xl shadow-md overflow-x-auto border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Header */}
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 No.
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              {/* Tăng min-w cho cột Name, Email, Role */}
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[120px]">
                 Name
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[150px]">
                 Email
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[100px]">
                 Phone Number
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
-                Loyalty Points
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[100px]">
+                Role
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
-                address
-              </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center min-w-[100px]">
                 Operator
               </th>
             </tr>
           </thead>
 
-          {/* Table Body */}
-          <tbody className="bg-white divide-y divide-gray-100 text-gray-700">
+          {/* Table Body - Dùng text-sm cho nội dung để dễ đọc hơn */}
+          <tbody className="bg-white divide-y divide-gray-100 text-gray-700 text-sm">
             {users &&
               users.length > 0 &&
               users.map((user, index) => (
@@ -197,28 +193,25 @@ export const AdminStaffPage = () => {
                   key={user?._id}
                   className="hover:bg-gray-50 transition duration-150"
                 >
-                  <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
+                  <td className="px-3 py-3 whitespace-nowrap font-medium text-left">
                     {((currentPage > 0 ? currentPage : 1) - 1) * pageSize +
                       index +
                       1}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
+                  <td className="px-3 py-3 whitespace-nowrap font-medium text-left">
                     {user?.name}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left">
+                  <td className="px-3 py-3 whitespace-nowrap text-left">
                     {user?.email}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left">
+                  <td className="px-3 py-3 whitespace-nowrap text-left">
                     {user?.phone || "___"}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right">
-                    {user?.loyaltyPoints || 0}
+                  <td className="px-3 py-3 whitespace-nowrap text-left">
+                    {user?.role}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right">
-                    {user?.address?.[0] || "___"}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-4">
+                  <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-3">
                       <SquarePen
                         className="w-4 cursor-pointer text-gray-500 hover:text-black duration-150"
                         onClick={() => handleEdit(user?._id)}

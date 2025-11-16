@@ -12,3 +12,4 @@ export const imgProducts = {
   Medication: "https://i.postimg.cc/XYHY9ycJ/Artboard-1-1.png",
   Toys: "https://i.postimg.cc/8cJRVSpv/Artboard-1-3.png",
 };
+export const momoLogo = "https://i.postimg.cc/fbvgBXsh/MOMO-Logo-App.png";

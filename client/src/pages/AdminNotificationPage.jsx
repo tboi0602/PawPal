@@ -31,10 +31,9 @@ export const AdminNotificationPage = () => {
   const loadNotifications = useCallback(async (page, search) => {
     setIsLoading(true);
     const dataRes = await getNotificationsAll(page, search);
-
     if (!dataRes.success) {
       setNotifications([]);
-      setMessage(dataRes.message || "Failed to fetch notifications.");
+      setMessage(dataRes.message);
       setTotalNotifications(0);
       setTotalPages(0);
       setPageSize(0);
@@ -42,15 +41,15 @@ export const AdminNotificationPage = () => {
       setIsLoading(false);
       return;
     }
-
     try {
-      setNotifications(dataRes.notifications || []);
-      setTotalNotifications(dataRes.pagination?.totalNotifications || 0);
-      setTotalPages(dataRes.pagination?.totalPages || 0);
-      setPageSize(dataRes.pagination?.pageSize || 0);
-      setCurrentPage(dataRes.pagination?.currentPage || page);
+      setNotifications(dataRes.notifications);
+      setTotalNotifications(dataRes.pagination.totalNotifications);
+      setTotalPages(dataRes.pagination.totalPages);
+      setPageSize(dataRes.pagination.pageSize);
+      setCurrentPage(dataRes.pagination.currentPage);
     } catch (error) {
       setMessage(error.message);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -68,60 +67,63 @@ export const AdminNotificationPage = () => {
 
   const handlePageChange = async (page) => {
     if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
       await loadNotifications(page, debounceSearch);
     }
   };
 
   const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Deleted this notification?",
-      text: "You will not be able to recover this notification data!",
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      reverseButtons: true,
-    });
-    if (result.isConfirmed) {
-      const dataRes = await deleteNotifications(id);
-      if (!dataRes.success) {
-        Swal.fire({
-          toast: true,
-          position: "bottom-right",
-          icon: "error",
-          title: dataRes.message,
-          showConfirmButton: false,
-          timer: 5000,
-          timerProgressBar: true,
-        });
+      confirmButtonColor: "red",
+      cancelButtonColor: "gray",
+      confirmButtonText: "Yes",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const dataRes = await deleteNotifications(id);
+        if (dataRes.success) {
+          Swal.fire({
+            toast: true,
+            position: "bottom-right",
+            icon: "success",
+            title: dataRes.message,
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true,
+          });
+          loadNotifications(currentPage, debounceSearch);
+        } else {
+          Swal.fire({
+            toast: true,
+            position: "bottom-right",
+            icon: "error",
+            title: dataRes.message,
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true,
+          });
+        }
       }
-      loadNotifications();
-      Swal.fire({
-        toast: true,
-        position: "bottom-right",
-        icon: "success",
-        title: dataRes.message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-  };
-
-  const calculateSTT = (index) => {
-    return (currentPage - 1) * pageSize + index + 1;
+    });
   };
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* --- 1. Header & Search Box --- */}
-      <div className="flex items-center justify-between w-full pt-10">
-        <h1 className="text-4xl font-bold text-black">Manager Notification</h1>
-        <div className="flex w-1/3 gap-4 justify-end items-center">
-          {/* Search Input */}
+    <div className="flex flex-col gap-8 p-4 md:p-10">
+      {/* Title & Search Bar */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pt-4 md:pt-10 gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-black shrink-0">
+          Manager Notification
+        </h1>
+        {/* Search Container */}
+        <div className="flex w-full md:w-2/3 lg:w-1/2 gap-4 justify-start md:justify-end items-center">
           <div className="w-full relative flex justify-center items-center">
+            {/* Search Input */}
             <InputForm
               Icon={Search}
-              placeholder="Search notifications..."
+              placeholder="Search notification content..."
               name="search"
               type="text"
               value={search}
@@ -130,81 +132,81 @@ export const AdminNotificationPage = () => {
             {search && (
               <X
                 className="absolute right-2 cursor-pointer text-gray-400 hover:text-black"
-                onClick={() => setSearch("")}
+                onClick={() => {
+                  setSearch("");
+                }}
               />
             )}
           </div>
+          {/* Add Notification Button */}
+          <button
+            onClick={() => setOpenAdd(true)}
+            className="flex items-center justify-center p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition duration-150 shrink-0 min-w-[120px]"
+          >
+            <CirclePlus className="w-5 h-5 mr-2" />
+            <span className="hidden sm:inline">Add Notification</span>
+          </button>
         </div>
-        <button
-          className="flex  gap-1 bg-gray-800 text-white p-2 px-4 rounded-lg hover:bg-black transition duration-200 cursor-pointer"
-          onClick={() => {
-            setOpenAdd(true);
-          }}
-        >
-          <CirclePlus className="w-5" />
-          New Notification
-        </button>
       </div>
 
-      {/* --- 2. Notification Table --- */}
+      {/* Notification Table - Responsive Overflow */}
       <div className="bg-white rounded-xl shadow-md overflow-x-auto border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Header */}
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 No.
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+              {/* Tăng min-w cho cột Title và Content */}
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[150px]">
                 Title
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                Content (Summary)
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[250px]">
+                Content
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                Sent Time
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center min-w-[120px]">
+                Created At
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center min-w-20">
                 Type
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                Operator
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center min-w-20">
+                Delete
               </th>
             </tr>
           </thead>
-          {/* Table Body */}
-          <tbody className="bg-white divide-y divide-gray-100 text-gray-700">
-            {isLoading ? (
-              <tr>
-                <td colSpan="6" className="py-10 text-center">
-                  <div className="w-full flex justify-center items-center">
-                    <Loader />
-                  </div>
-                </td>
-              </tr>
-            ) : notifications.length > 0 ? (
+
+          {/* Table Body - Dùng text-sm cho nội dung */}
+          <tbody className="bg-white divide-y divide-gray-100 text-gray-700 text-sm">
+            {!isLoading && notifications.length > 0 ? (
               notifications.map((notification, index) => {
+                const isRead = notification.isRead;
                 return (
                   <tr
-                    key={notification._id || notification.group_id || index}
-                    className="hover:bg-gray-50 transition duration-150"
+                    key={notification._id}
+                    className={`hover:bg-gray-50 transition duration-150 ${
+                      !isRead ? "font-semibold bg-blue-50/50" : ""
+                    }`}
                   >
-                    <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
-                      {calculateSTT(index)}
+                    <td className="px-3 py-4 whitespace-nowrap font-medium text-left">
+                      {((currentPage > 0 ? currentPage : 1) - 1) * pageSize +
+                        index +
+                        1}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap font-medium text-left">
+                    <td className="px-3 py-4 whitespace-nowrap text-left max-w-xs overflow-hidden text-ellipsis">
                       {notification.title}
                     </td>
-                    <td className="px-4 py-4 text-left max-w-xs wrap-break-words">
+                    <td className="px-3 py-4 text-left max-w-lg overflow-hidden text-ellipsis">
                       {notification.content}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center  text-gray-500">
+                    <td className="px-3 py-4 whitespace-nowrap text-center text-gray-500">
                       {formatDate(notification.createdAt, "dd/mm/yyyy HH:MM")}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 py-4 whitespace-nowrap text-center">
                       {notification.type}
                     </td>
-                    <td className="px-4 py-4 ">
+                    <td className="px-3 py-4 text-center">
                       <Trash
                         className="w-5 text-red-500 hover:text-red-700 cursor-pointer duration-150 m-auto"
                         onClick={() => handleDelete(notification._id)}
@@ -222,9 +224,19 @@ export const AdminNotificationPage = () => {
                 </td>
               </tr>
             )}
+            {isLoading && (
+              <tr>
+                <td colSpan="8" className="py-8">
+                  <div className="w-full flex justify-center items-center">
+                    <Loader />
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
       {openAdd && (
         <AddNotificationModel
           setOpenAdd={setOpenAdd}

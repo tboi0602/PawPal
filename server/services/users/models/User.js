@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
     phone: { type: Number },
     loyaltyPoints: { type: Number },
     address: { type: Array },
+    rank: {
+      type: String,
+      enum: ["Bronze", "Gold", "Diamond", "Platinum"],
+      default: "Bronze",
+    },
     isActivate: { type: Boolean, required: true, default: false },
   },
   {

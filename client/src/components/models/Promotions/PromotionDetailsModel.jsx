@@ -73,7 +73,7 @@ export const PromotionDetailsModel = ({ promotionId, setOpenDetails }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-99 bg-black/50 flex items-center justify-center p-4">
       <div className="relative z-50 w-full max-w-4xl bg-white text-black shadow-2xl rounded-2xl p-6 overflow-y-auto max-h-[90vh] transition-all duration-300 transform scale-100">
         {/* Close button */}
         <X

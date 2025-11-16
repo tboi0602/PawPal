@@ -1,5 +1,5 @@
-import Promotion from "../models/Promotion.js";
-import PromotionUsage from "../models/PromotionUsage.js";
+import Promotion from "../models/promotion/Promotion.js";
+import PromotionUsage from "../models/promotion/PromotionUsage.js";
 
 const VALID_RANKS = ["All", "Bronze", "Silver", "Gold", "Platinum"];
 
@@ -286,86 +286,5 @@ export const deletePromotion = async (req, res) => {
       success: false,
       message: `Server Promotion error: ${error.message}`,
     });
-  }
-};
-
-export const applyPromotion = async (req, res) => {
-  const { userId, userRank, promotionCode, orderId, orderAmount } = req.body;
-
-  try {
-    const promo = await Promotion.findOne({
-      promotionCode: promotionCode.toUpperCase().trim(),
-    });
-    if (!promo)
-      return res
-        .status(404)
-        .json({ success: false, message: "Promotion not found" });
-
-    // Auto update status before checking
-    const now = new Date();
-    if (promo.status === "upcoming" && now >= promo.startDate) {
-      promo.status = "active";
-      await promo.save();
-    } else if (
-      promo.status === "active" &&
-      (now >= promo.endDate ||
-        (promo.usageLimit > 0 && promo.usedCount >= promo.usageLimit))
-    ) {
-      promo.status = "expired";
-      await promo.save();
-    }
-
-    if (promo.status !== "active") {
-      return res.status(400).json({
-        success: false,
-        message:
-          promo.status === "expired"
-            ? "Promotion has expired"
-            : "Promotion is not active yet",
-      });
-    }
-
-    if (promo.minOrderAmount && orderAmount < promo.minOrderAmount) {
-      return res.status(400).json({
-        success: false,
-        message: `Minimum order amount of ${promo.minOrderAmount} required to use this promotion`,
-      });
-    }
-
-    const requiredRankValue = getRankValue(promo.rank);
-    const userRankValue = getRankValue(userRank);
-
-    if (userRankValue < requiredRankValue) {
-      return res.status(400).json({
-        success: false,
-        message: `Your current rank (${userRank}) is not high enough to use this promotion (requires ${promo.rank} or higher).`,
-      });
-    }
-
-    const existingUsage = await PromotionUsage.findOne({
-      userId,
-      promotionId: promo._id,
-    });
-    if (existingUsage)
-      return res
-        .status(400)
-        .json({ success: false, message: "User already used this promotion" });
-
-    await PromotionUsage.create({
-      userId,
-      promotionId: promo._id,
-      orderId,
-      used: true,
-    });
-
-    await Promotion.findByIdAndUpdate(promo._id, { $inc: { usedCount: 1 } });
-
-    res.status(200).json({
-      success: true,
-      message: "Promotion applied successfully",
-      promo,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
   }
 };
