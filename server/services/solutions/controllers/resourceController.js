@@ -10,11 +10,11 @@ export const addResource = async (req, res) => {
         .json({ success: false, message: "Missing required fields" });
     }
 
-    if (!["Floor 1", "Floor 2"].includes(data.location)) {
+    const resource = await Resource.findOne({ name: data.name });
+    if (resource)
       return res
         .status(400)
-        .json({ success: false, message: "Invalid location value" });
-    }
+        .json({ success: false, message: "Resource exited" });
 
     const validDays = [
       "Monday",
@@ -81,6 +81,11 @@ export const addResource = async (req, res) => {
 export const getResources = async (req, res) => {
   try {
     const resources = await Resource.find().populate("solution");
+    if (resources.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No resources found" });
+    }
     return res.status(200).json({ success: true, resources });
   } catch (error) {
     return res
@@ -149,6 +154,22 @@ export const getResourcesBySolutionId = async (req, res) => {
   try {
     const resources = await Resource.find({ "solution._id": solutionId });
     return res.status(200).json({ success: true, resources });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: `Server error: ${error.message}` });
+  }
+};
+
+export const deleteResource = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const resource = await Resource.findByIdAndDelete(id);
+    if (!resource)
+      return res
+        .status(401)
+        .json({ success: false, message: "Resource not found" });
+    return res.status(200).json({ success: true, resource });
   } catch (error) {
     return res
       .status(500)

@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { ShoppingBag, ChevronLeft } from "lucide-react";
-import { useOrderLogic } from "../hooks/useOrderLogic";
-import { Loader2 } from "../components/models/Loaders/Loader2";
-import { ShippingForm } from "../components/inputs/ShippingForm";
-import { PromotionSection } from "../components/models/Promotions/PromotionSection";
-import { OrderSummaryCard } from "../components/models/Orders/OrderSummaryCard";
-import { momoLogo } from "../assets/images.js";
+import { useOrderLogic } from "../../hooks/useOrderLogic.js";
+import { Loader2 } from "../../components/models/Loaders/Loader2.jsx";
+import { ShippingForm } from "../../components/inputs/ShippingForm.jsx";
+import { PromotionSection } from "../../components/models/Promotions/PromotionSection.jsx";
+import { OrderSummaryCard } from "../../components/models/Orders/OrderSummaryCard.jsx";
+import { momoLogo } from "../../assets/images.js";
 
 export const ProductPaymentPage = () => {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export const ProductPaymentPage = () => {
               newAddressInput={newAddressInput || ""}
               showNewAddressInput={showNewAddressInput || false}
               loading={loading}
-              handleInputChange={handleInputChange }
+              handleInputChange={handleInputChange}
               handleSaveNewAddress={handleSaveNewAddress}
               setNewAddressInput={setNewAddressInput}
               setShowNewAddressInput={setShowNewAddressInput}

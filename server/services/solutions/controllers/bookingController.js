@@ -1,9 +1,8 @@
 import { calculateTotalAmount } from "../utils/calculatePrice.js";
-import { validatePetBooking } from "../utils/bookingUtils.js";
-import { enrichPetData } from "../utils/petUtils.js";
 import Solution from "../models/Solution.js";
+import Resource from "../models/Resource.js";
 import Booking from "../models/Booking.js";
-import { USER_TARGET } from "../../../configs/config.js";
+import { EMAIL_TARGET, USER_TARGET } from "../../../configs/config.js";
 
 export const createBooking = async (req, res) => {
   try {
@@ -19,12 +18,10 @@ export const createBooking = async (req, res) => {
     const rawStart = data.dateStarts?.replace(" ", "T");
     const dateStart = new Date(rawStart);
     if (isNaN(dateStart))
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid date format for dateStarts",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format for dateStarts",
+      });
 
     // Tính dateEnd theo duration
     const dateEnd = new Date(
@@ -39,35 +36,63 @@ export const createBooking = async (req, res) => {
     console.log("dateEndVN:", dateEndVN.toISOString());
 
     if (dateEndVN < dateStartVN)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "End date cannot be before start date",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "End date cannot be before start date",
+      });
 
-    const userRes = await fetch(`${USER_TARGET}/users/${data.userId}`);
+    // ✅ Validation 1: Không cho đặt trong quá khứ
+    const nowVN = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    if (dateStartVN < nowVN) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot book in the past. Please select a future date.",
+      });
+    }
+
+    // ✅ Validation 2: Check pet conflict - không cho 1 pet đặt cùng thời gian
+    const petIds = data.pets?.map((p) => p.petId) || [];
+    if (petIds.length > 0) {
+      const conflictingBookings = await Booking.findOne({
+        $or: [
+          {
+            "pets.petId": { $in: petIds },
+            status: { $in: ["pending", "confirmed"] },
+            dateStarts: { $lt: dateEndVN },
+            dateEnd: { $gt: dateStartVN },
+          },
+        ],
+      });
+
+      if (conflictingBookings) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "One or more pets already have a booking during this time period. Please choose a different time.",
+        });
+      }
+    }
+
+    const userRes = await fetch(`${USER_TARGET}/users/${data.userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": req.headers["x-user-id"],
+        "x-user-role": req.headers["x-user-role"],
+        "x-user-activate": req.headers["x-user-activate"],
+      },
+    });
     const userData = await userRes.json();
     const user = userData.user;
 
-    const petsWithResource = [];
+    // Validate pets có petId và resourceId
     for (const pet of data.pets) {
-      if (!pet.petId || !pet.resourceId)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Each pet must have petId and resourceId",
-          });
-
-      const resource = await validatePetBooking(
-        pet,
-        solution,
-        dateStartVN,
-        dateEndVN
-      );
-      const petData = await enrichPetData(data.userId, pet, resource);
-      petsWithResource.push(petData);
+      if (!pet.petId || !pet.resourceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Each pet must have petId and resourceId",
+        });
+      }
     }
 
     const userInfo = {
@@ -80,7 +105,13 @@ export const createBooking = async (req, res) => {
 
     const { totalAmount, petsWithSubTotal } = await calculateTotalAmount(
       solution,
-      { ...data, pets: petsWithResource }
+      {
+        ...data,
+        pets: data.pets,
+        userPets: user.pets,
+        dateStarts: dateStartVN,
+        dateEnd: dateEndVN,
+      }
     );
 
     const booking = await Booking.create({
@@ -95,14 +126,272 @@ export const createBooking = async (req, res) => {
       status: "pending",
     });
 
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message: "Booking created successfully",
-        booking,
-      });
+    if (booking) {
+      const templateName = "bookingConfirmation";
+      const to = userInfo?.email;
+      const subject = `Booking Confirmation ${booking._id}`;
+      const data = {
+        customerName: userInfo?.name,
+        bookingId: booking._id,
+        serviceName: booking.solutionName,
+        bookingTime: booking.createdAt.toLocaleDateString("vi-VN"),
+        bookingLink: "http://localhost:5173/home/bookings",
+      };
+
+      fetch(`${EMAIL_TARGET}/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ templateName, to, subject, data }),
+      }).catch((err) => console.log(err.message));
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Booking created successfully",
+      booking,
+    });
   } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: `Server error: ${error.message}` });
+  }
+};
+
+/**
+ * Create booking with status "pending" before MoMo payment
+ * After payment verification, status will be updated to "confirmed"
+ * If payment fails, booking will be deleted
+ */
+export const createBookingForPayment = async (req, res) => {
+  try {
+    const {
+      solutionId,
+      userId,
+      dateStarts,
+      pets,
+      hireShipper,
+      insurance,
+      shipperAddress,
+    } = req.body;
+
+    if (!solutionId || !userId || !dateStarts || !pets || pets.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Missing required fields: solutionId, userId, dateStarts, pets",
+      });
+    }
+
+    if (hireShipper && !shipperAddress) {
+      return res.status(400).json({
+        success: false,
+        message: "Shipping address is required when hiring shipper",
+      });
+    }
+
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Solution not found" });
+    }
+
+    const rawStart = dateStarts?.replace(" ", "T");
+    const dateStart = new Date(rawStart);
+    if (isNaN(dateStart)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format for dateStarts",
+      });
+    }
+
+    // Calculate dateEnd based on solution duration
+    const dateEnd = new Date(
+      dateStart.getTime() + (solution.duration || 0) * 60000
+    );
+
+    // Convert to Vietnam timezone (+7h)
+    const dateStartVN = new Date(dateStart.getTime() + 7 * 60 * 60 * 1000);
+    const dateEndVN = new Date(dateEnd.getTime() + 7 * 60 * 60 * 1000);
+
+    // Validate: Cannot book in the past
+    const nowVN = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    if (dateStartVN < nowVN) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot book in the past. Please select a future date.",
+      });
+    }
+
+    // Validate: Check pet conflict
+    const petIds = pets?.map((p) => p.petId) || [];
+    if (petIds.length > 0) {
+      const conflictingBookings = await Booking.findOne({
+        $or: [
+          {
+            "pets.petId": { $in: petIds },
+            status: { $in: ["pending", "confirmed"] },
+            dateStarts: { $lt: dateEndVN },
+            dateEnd: { $gt: dateStartVN },
+          },
+        ],
+      });
+
+      if (conflictingBookings) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "One or more pets already have a booking during this time period.",
+        });
+      }
+    }
+
+    // Validate: Check resource working hours (based on resourceId from first pet)
+    const resourceId = pets[0]?.resourceId;
+    if (resourceId) {
+      const resource = await Resource.findById(resourceId);
+      if (resource) {
+        // Get day of week from booking date (0 = Sunday, 1 = Monday, etc.)
+        const dayOfWeekNum = dateStartVN.getDay();
+        const daysMap = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+        const bookingDayOfWeek = daysMap[dayOfWeekNum];
+
+        // Check if resource operates on this day
+        if (!resource.dayOfWeek.includes(bookingDayOfWeek)) {
+          return res.status(400).json({
+            success: false,
+            message: `Resource is not available on ${bookingDayOfWeek}. Available days: ${resource.dayOfWeek.join(
+              ", "
+            )}`,
+          });
+        }
+
+        // Check if booking time falls within working hours
+        const bookingStartTime = `${String(dateStartVN.getHours()).padStart(
+          2,
+          "0"
+        )}:${String(dateStartVN.getMinutes()).padStart(2, "0")}`;
+        const bookingEndTime = `${String(dateEndVN.getHours()).padStart(
+          2,
+          "0"
+        )}:${String(dateEndVN.getMinutes()).padStart(2, "0")}`;
+
+        if (
+          bookingStartTime < resource.startTime ||
+          bookingEndTime > resource.endTime
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Booking time must be between ${resource.startTime} and ${resource.endTime}. Resource operating hours: ${resource.startTime} - ${resource.endTime}`,
+          });
+        }
+      }
+    }
+
+    // Fetch user data
+    const userRes = await fetch(`${USER_TARGET}/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": req.headers["x-user-id"] || userId,
+        "x-user-role": req.headers["x-user-role"] || "customer",
+        "x-user-activate": req.headers["x-user-activate"] || "true",
+      },
+    });
+    const userData = await userRes.json();
+    const user = userData.user;
+
+    // Validate pets have required fields
+    for (const pet of pets) {
+      if (!pet.petId) {
+        return res.status(400).json({
+          success: false,
+          message: "Each pet must have a petId",
+        });
+      }
+    }
+
+    const userInfo = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+    };
+
+    // Calculate total amount
+    const { totalAmount, petsWithSubTotal } = await calculateTotalAmount(
+      solution,
+      {
+        pets,
+        userPets: user.pets,
+        dateStarts: dateStartVN,
+        dateEnd: dateEndVN,
+      }
+    );
+
+    // Create booking with "pending" status
+    const booking = await Booking.create({
+      user: userInfo,
+      solutionId: solution._id,
+      solutionName: solution.name,
+      dateStarts: dateStartVN,
+      dateEnd: dateEndVN,
+      pets: petsWithSubTotal,
+      totalAmount,
+      hireShipper: !!hireShipper,
+      shipperAddress: hireShipper ? shipperAddress : null,
+      insurance: !!insurance,
+      status: "pending",
+      paymentMethod: "MOMO",
+    });
+
+    if (booking) {
+      const templateName = "bookingConfirmation";
+      const to = userInfo?.email;
+      const subject = `Booking Confirmation ${booking._id}`;
+      const data = {
+        customerName: userInfo?.name,
+        bookingId: booking._id,
+        serviceName: booking.solutionName,
+        bookingTime: booking.createdAt.toLocaleDateString("vi-VN"),
+        bookingLink: "http://localhost:5173/home/bookings",
+      };
+      fetch(`${EMAIL_TARGET}/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ templateName, to, subject, data }),
+      }).catch((err) => console.log(err.message));
+      return res.status(201).json({
+        success: true,
+        message: "Booking created. Proceed to payment.",
+        booking: {
+          _id: booking._id,
+          bookingId: booking._id,
+          totalAmount: booking.totalAmount,
+          solutionName: booking.solutionName,
+          dateStarts: booking.dateStarts,
+          dateEnd: booking.dateEnd,
+          pets: booking.pets,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error in createBookingForPayment:", error);
     return res
       .status(500)
       .json({ success: false, message: `Server error: ${error.message}` });
@@ -158,7 +447,7 @@ export const getBookings = async (req, res) => {
       findQuery.status = statusFilter;
     }
 
-    // Lọc theo userId (booking.user.id)
+    // Lọc theo userId
     if (userIdFilter) {
       findQuery["user.id"] = userIdFilter;
     }
@@ -184,8 +473,12 @@ export const getBookings = async (req, res) => {
     // Tổng số booking phù hợp
     const totalBookings = await Booking.countDocuments(findQuery);
 
-    // If no bookings found, return empty list with pagination (better for clients)
-    // continue and return empty results instead of 404
+    if (totalBookings === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No bookings found",
+      });
+    }
 
     // Lấy danh sách booking (phân trang + sort mới nhất)
     const bookings = await Booking.find(findQuery)
@@ -207,6 +500,20 @@ export const getBookings = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error in getBookings: ${error.message}`);
+    return res
+      .status(500)
+      .json({ success: false, message: `Server error: ${error.message}` });
+  }
+};
+
+export const getBookingsByUserId = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const bookings = await Booking.find({ "user.id": userId }).sort({
+      createdAt: -1,
+    });
+    return res.status(200).json({ success: true, bookings });
+  } catch (error) {
     return res
       .status(500)
       .json({ success: false, message: `Server error: ${error.message}` });
@@ -237,29 +544,95 @@ export const updateBookingStatus = async (req, res) => {
   const { status } = req.body;
   const validStatuses = ["pending", "confirmed", "completed", "cancelled"];
 
+  // Định nghĩa thứ tự tiến triển (lớn hơn là cấp cao hơn/tiến triển hơn)
+  const statusOrder = {
+    pending: 0,
+    confirmed: 1,
+    completed: 2,
+    cancelled: -1, // Trạng thái hủy được xử lý riêng
+  };
+
+  // 1. Kiểm tra trạng thái mới có hợp lệ không
   if (!validStatuses.includes(status)) {
     return res
       .status(400)
       .json({ success: false, message: "Invalid status value" });
   }
+
   try {
+    // 2. Lấy booking hiện tại để kiểm tra trạng thái
+    const existingBooking = await Booking.findById(id);
+
+    if (!existingBooking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+
+    const currentStatus = existingBooking.status;
+
+    // Kiểm tra xem trạng thái có bị trùng lặp không
+    if (status === currentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: `Booking is already in status '${currentStatus}'.`,
+      });
+    }
+
+    // --- LOGIC CHẶN CÁC TRẠNG THÁI KHÔNG THỂ CẬP NHẬT (CANCELLED / COMPLETED) ---
+
+    // 3. Quy tắc: Không thể thay đổi status của booking đã CANCELLED
+    if (currentStatus === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update status: Booking is already cancelled.",
+      });
+    }
+
+    // 4. Quy tắc: Không thể thay đổi status của booking đã COMPLETED
+    if (currentStatus === "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update status: Booking is already completed.",
+      });
+    }
+
+    // --- LOGIC CHẶN CHUYỂN TRẠNG THÁI LÙI CẤP ---
+
+    // 5. Nếu trạng thái mới KHÔNG phải là 'cancelled', kiểm tra việc lùi cấp
+    if (status !== "cancelled") {
+      const currentOrderIndex = statusOrder[currentStatus];
+      const newOrderIndex = statusOrder[status];
+
+      // Chỉ áp dụng logic tiến triển cho các trạng thái trong luồng chính (pending, confirmed, completed)
+      if (currentOrderIndex !== undefined && newOrderIndex !== undefined) {
+        if (newOrderIndex < currentOrderIndex) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid status transition: Cannot change status backward from '${currentStatus}' to '${status}'.`,
+          });
+        }
+      }
+    }
+
+    // 6. Cập nhật booking
     const updatedBooking = await Booking.findByIdAndUpdate(
       id,
       { status },
       { new: true }
     );
+
     if (!updatedBooking) {
       return res
-        .status(404)
-        .json({ success: false, message: "Booking not found" });
+        .status(500)
+        .json({ success: false, message: "Failed to save status update." });
     }
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Booking status updated successfully",
-        booking: updatedBooking,
-      });
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking status updated successfully",
+      booking: updatedBooking,
+    });
   } catch (error) {
     return res
       .status(500)
@@ -267,158 +640,161 @@ export const updateBookingStatus = async (req, res) => {
   }
 };
 
-export const updateBooking = async (req, res) => {
+/**
+ * Create booking after successful MoMo payment
+ * Called from payment service after payment verification
+ */
+export const createBookingAfterPayment = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = req.body;
+    const { solutionId, bookingData } = req.body;
 
-    // Lấy booking hiện tại
-    const booking = await Booking.findById(id);
-    if (!booking)
-      return res
-        .status(404)
-        .json({ success: false, message: "Booking not found" });
+    if (!solutionId || !bookingData) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing solutionId or bookingData",
+      });
+    }
 
-    // Lấy solution liên quan
-    const solution = await Solution.findById(booking.solutionId);
-    if (!solution)
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
       return res
         .status(404)
         .json({ success: false, message: "Solution not found" });
-
-    // Xác định userId (ưu tiên booking, fallback body)
-    const userId = booking.user?.id || data.userId;
-    if (!userId)
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing userId" });
-
-    // Lấy thông tin user
-    const userRes = await fetch(`${USER_TARGET}/users/${userId}`);
-    const userData = await userRes.json();
-    const user = userData.user;
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-
-    // Chuẩn hóa dateStarts (cho phép dạng "YYYY-MM-DD HH:mm")
-    let rawStart = data.dateStarts || booking.dateStarts;
-    if (typeof rawStart === "string") {
-      rawStart = rawStart.trim();
-      if (!rawStart.includes("T")) rawStart = rawStart.replace(" ", "T");
-      if (rawStart.length === 16) rawStart += ":00";
     }
 
+    const rawStart = bookingData.dateStarts?.replace(" ", "T");
     const dateStart = new Date(rawStart);
-    if (isNaN(dateStart))
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid date format for dateStarts",
-        });
+    if (isNaN(dateStart)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format for dateStarts",
+      });
+    }
 
+    // Calculate dateEnd based on duration
     const dateEnd = new Date(
       dateStart.getTime() + (solution.duration || 0) * 60000
     );
 
-    // Chuyển sang giờ Việt Nam (+7)
+    // Convert to Vietnam timezone (+7h)
     const dateStartVN = new Date(dateStart.getTime() + 7 * 60 * 60 * 1000);
     const dateEndVN = new Date(dateEnd.getTime() + 7 * 60 * 60 * 1000);
 
-    // Check end trước start
-    if (dateEndVN < dateStartVN)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "End date cannot be before start date",
-        });
-
-    // Không cho update về quá khứ
+    // Validate: Cannot book in the past
     const nowVN = new Date(Date.now() + 7 * 60 * 60 * 1000);
-    if (dateStartVN < nowVN)
-      return res
-        .status(400)
-        .json({
+    if (dateStartVN < nowVN) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot book in the past. Please select a future date.",
+      });
+    }
+
+    // Validate: Check pet conflict
+    const petIds = bookingData.pets?.map((p) => p.petId) || [];
+    if (petIds.length > 0) {
+      const conflictingBookings = await Booking.findOne({
+        $or: [
+          {
+            "pets.petId": { $in: petIds },
+            status: { $in: ["pending", "confirmed"] },
+            dateStarts: { $lt: dateEndVN },
+            dateEnd: { $gt: dateStartVN },
+          },
+        ],
+      });
+
+      if (conflictingBookings) {
+        return res.status(400).json({
           success: false,
-          message: "Cannot update booking to a past date",
+          message:
+            "One or more pets already have a booking during this time period.",
         });
-
-    // Lấy pets (nếu không gửi thì dùng booking.pets)
-    const pets = data.pets && data.pets.length > 0 ? data.pets : booking.pets;
-    if (!pets || pets.length === 0)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Booking must have at least one pet",
-        });
-
-    const petsWithResource = [];
-
-    // Validate từng pet
-    for (const pet of pets) {
-      try {
-        if (!pet.petId || !pet.resourceId)
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: "Each pet must have petId and resourceId",
-            });
-
-        const resource = await validatePetBooking(
-          pet,
-          solution,
-          dateStartVN,
-          dateEndVN
-        );
-        const petData = await enrichPetData(userId, pet, resource);
-        petsWithResource.push(petData);
-      } catch (err) {
-        console.error(`❌ enrichPetData error for ${pet.petId}:`, err.message);
-        // Nếu muốn fail toàn bộ booking:
-        return res.status(400).json({ success: false, message: err.message });
-        // Nếu muốn skip pet lỗi thì comment dòng trên, và continue;
       }
     }
 
-    // Tính tổng tiền
+    // Fetch user data
+    const userRes = await fetch(`${USER_TARGET}/users/${bookingData.userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": req.headers["x-user-id"],
+        "x-user-role": req.headers["x-user-role"],
+        "x-user-activate": req.headers["x-user-activate"],
+      },
+    });
+    const userData = await userRes.json();
+    const user = userData.user;
+
+    // Validate pets have petId and resourceId
+    for (const pet of bookingData.pets) {
+      if (!pet.petId) {
+        return res.status(400).json({
+          success: false,
+          message: "Each pet must have a petId",
+        });
+      }
+    }
+
+    const userInfo = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+    };
+
+    // Calculate total amount
     const { totalAmount, petsWithSubTotal } = await calculateTotalAmount(
       solution,
       {
-        ...booking,
-        userId, // ✅ Thêm dòng này để truyền đúng user
-        pets: petsWithResource,
+        ...bookingData,
+        pets: bookingData.pets,
+        userPets: user.pets,
+        dateStarts: dateStartVN,
+        dateEnd: dateEndVN,
       }
     );
 
-    // Cập nhật booking
-    booking.dateStarts = dateStartVN;
-    booking.dateEnd = dateEndVN;
-    booking.pets = petsWithSubTotal.map((p) => ({
-      petId: p.petId,
-      petName: p.petName,
-      resourceId: p.resourceId,
-      resourceName: p.resourceName,
-      subTotal: p.subTotal,
-    }));
-    booking.totalAmount = totalAmount;
-    if (data.hireShipper !== undefined)
-      booking.hireShipper = !!data.hireShipper;
-    if (data.status) booking.status = data.status;
+    // Create booking with "confirmed" status since payment was successful
+    const booking = await Booking.create({
+      user: userInfo,
+      solutionId: solution._id,
+      solutionName: solution.name,
+      dateStarts: dateStartVN,
+      dateEnd: dateEndVN,
+      pets: petsWithSubTotal,
+      shipperAddress,
+      totalAmount,
+      status: "confirmed",
+      paymentMethod: "MOMO",
+    });
+    if (booking) {
+      const templateName = "bookingConfirmation";
+      const to = userInfo?.email;
+      const subject = `Booking Confirmation ${booking._id}`;
+      const data = {
+        customerName: userInfo?.name,
+        bookingId: booking._id,
+        serviceName: booking.solutionName,
+        bookingTime: booking.createdAt.toLocaleDateString("vi-VN"),
+        bookingLink: "http://localhost:5173/home/bookings",
+      };
+      fetch(`${EMAIL_TARGET}/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ templateName, to, subject, data }),
+      }).catch((err) => console.log(err.message));
+    }
 
-    const updatedBooking = await booking.save();
-
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      message: "Booking updated successfully",
-      booking: updatedBooking,
+      message: "Booking created successfully after payment",
+      booking,
     });
   } catch (error) {
-    console.error("❌ Update booking error:", error);
     return res
       .status(500)
       .json({ success: false, message: `Server error: ${error.message}` });

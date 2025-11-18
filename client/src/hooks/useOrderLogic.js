@@ -201,6 +201,7 @@ export const useOrderLogic = () => {
     setLoading(true);
     const orderData = {
       userId: user?._id || "GUEST",
+      email: user?.email || "",
       rank: user?.rank || null,
       address: shippingInfo,
       orderItems: orderItems.map((item) => ({

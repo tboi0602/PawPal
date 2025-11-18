@@ -5,6 +5,7 @@ import { PAYMENT_PORT, MONGO_PAYMENT_URI } from "../../configs/config.js";
 import {
   handleMoMoPaymentResult,
   initiateMoMoPayment,
+  handleMoMoPaymentResultServiceBooking,
 } from "./paymentController.js";
 
 const app = express();
@@ -21,6 +22,10 @@ app.use(morgan("dev"));
 //routes
 app.post("/payments/momo/create", initiateMoMoPayment);
 app.get("/payments/momo/results", handleMoMoPaymentResult);
+app.get(
+  "/payments/momo/service-booking",
+  handleMoMoPaymentResultServiceBooking
+);
 //run service
 app.listen(PAYMENT_PORT, () => {
   console.log(

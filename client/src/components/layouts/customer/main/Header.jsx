@@ -10,21 +10,40 @@ import {
   ShoppingCart,
   ShowerHead,
   ShoppingBag,
-  Menu, 
+  Menu,
   X,
-  TicketCheckIcon, 
+  TicketCheckIcon,
 } from "lucide-react";
 import { UserModel } from "../../../models/Users/UserModel";
 import { NotifiModel } from "../../../models/NotifiModel";
 
-// Định nghĩa các liên kết điều hướng
 const navLinks = [
-  {  path: "/home/products",  href: "/home/products",  icon: ShoppingBag,  label: "Product",},
-  {  path: "/home/services",  href: "/home/services",  icon: ShowerHead,  label: "Service",},
+  {
+    path: "/home/products",
+    href: "/home/products",
+    icon: ShoppingBag,
+    label: "Product",
+  },
+  {
+    path: "/home/services",
+    href: "/home/services",
+    icon: ShowerHead,
+    label: "Service",
+  },
   { path: "/home/orders", href: "/home/orders", icon: Logs, label: "Order" },
-  {  path: "/home/booking",  href: "/home/booking",  icon: TicketCheck,  label: "Booking",},
+  {
+    path: "/home/bookings",
+    href: "/home/bookings",
+    icon: TicketCheck,
+    label: "Booking",
+  },
   { path: "/home/pets", href: "/home/pets", icon: PawPrint, label: "My Pet" },
-  { path: "/home/promotions", href: "/home/promotions", icon: TicketCheckIcon, label: "Promotion" },
+  {
+    path: "/home/promotions",
+    href: "/home/promotions",
+    icon: TicketCheckIcon,
+    label: "Promotion",
+  },
 ];
 
 export const Header = ({ name, numberUnread, loadHeader, numberItems }) => {

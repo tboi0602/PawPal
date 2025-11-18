@@ -1,18 +1,18 @@
 import { CirclePlus, Search, Trash, X } from "lucide-react";
 // COMPONENTS
-import InputForm from "../components/inputs/InputForm";
-import Pagination from "../components/buttons/Pagination";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
-import { formatDate } from "../utils/formatDate.js";
+import InputForm from "../../components/inputs/InputForm.jsx";
+import Pagination from "../../components/buttons/Pagination.jsx";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
+import { formatDate } from "../../utils/formatDate.js";
 // HOOKS & API
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounce } from "../../hooks/useDebounce.js";
 import {
   getNotificationsAll,
   deleteNotifications,
-} from "../services/notifications/notificationAPI";
+} from "../../services/notifications/notificationAPI.js";
 import Swal from "sweetalert2";
-import { AddNotificationModel } from "../components/models/Notifications/AddNotificationModel.jsx";
+import { AddNotificationModel } from "../../components/models/Notifications/AddNotificationModel.jsx";
 
 export const AdminNotificationPage = () => {
   const [notifications, setNotifications] = useState([]);

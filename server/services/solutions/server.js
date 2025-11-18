@@ -16,6 +16,7 @@ import {
   getResources,
   updateResource,
   getResourcesBySolutionId,
+  deleteResource,
 } from "./controllers/resourceController.js";
 import {
   createBooking,
@@ -23,17 +24,15 @@ import {
   getBookings,
   deleteBooking,
   updateBookingStatus,
-  updateBooking,
+  createBookingAfterPayment,
+  createBookingForPayment,
 } from "./controllers/bookingController.js";
 
 const app = express();
 mongoose
   .connect(MONGO_SOLUTIONS_URI)
   .then(() => console.log("Solutions DB Connected!"))
-  .catch((err) => {
-    console.error("MongoDB Connection Error:", err.message);
-    process.exit(1);
-  });
+  .catch((err) => console.error(err));
 
 app.use(express.json());
 app.use(morgan("dev"));
@@ -54,31 +53,23 @@ app.put("/resources/:id", verifyAuth, checkRole(["ADMIN"]), updateResource);
 app.get(
   "/resources/solution/:solutionId",
   verifyAuth,
-  checkRole(["ADMIN"]),
   getResourcesBySolutionId
 );
+app.delete("/resources/:id", verifyAuth, deleteResource, checkRole(["ADMIN"]));
 
-// Booking routes
-app.post("/bookings/:id", createBooking);
-app.get("/bookings/:id", getBookingById);
-app.get("/bookings", getBookings);
-app.delete(
-  "/bookings/:id",
+// Booking routes - specific routes first, then parameterized routes
+app.post("/booking/for-payment", createBookingForPayment);
+app.post("/booking/payment/create", createBookingAfterPayment);
+app.post("/booking/:id", createBooking);
+app.get("/booking", getBookings);
+app.get("/booking/:id", getBookingById);
+app.put("/booking/:id/status", updateBookingStatus);
+app.put("/booking/status/:id", verifyAuth, updateBookingStatus);
+app.delete( 
+  "/booking/:id",
   verifyAuth,
   checkRole(["ADMIN", "STAFF"]),
   deleteBooking
-);
-app.put(
-  "/bookings/status/:id",
-  verifyAuth,
-  checkRole(["ADMIN", "STAFF"]),
-  updateBookingStatus
-);
-app.put(
-  "/bookings/:id",
-  verifyAuth,
-  checkRole(["ADMIN", "STAFF"]),
-  updateBooking
 );
 
 app.listen(SOLUTIONS_PORT, () => {

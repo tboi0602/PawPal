@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getProduct } from "../services/shopping/productAPI";
-import ImageGallery from "../components/models/Precentations/ImageGallery";
+import { getProduct } from "../../services/shopping/productAPI";
+import ImageGallery from "../../components/models/Precentations/ImageGallery";
 import { Minus, Plus } from "lucide-react";
-import { setItem, getItem } from "../utils/operations";
+import { setItem, getItem } from "../../utils/operations";
 import Swal from "sweetalert2";
-import { addToCart, getCart } from "../services/shopping/cartAPI";
+import { addToCart, getCart } from "../../services/shopping/cartAPI";
 import { useNavigate } from "react-router-dom";
-import { Review } from "../components/models/Products/Review";
-import { getReviews } from "../services/shopping/reviewAPI";
+import { Review } from "../../components/models/Products/Review";
+import { getReviews } from "../../services/shopping/reviewAPI";
 
 export const ProductDetailsPage = () => {
   const navigate = useNavigate();

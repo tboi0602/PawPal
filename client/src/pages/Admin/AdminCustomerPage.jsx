@@ -1,20 +1,18 @@
-import { CirclePlus, Eye, Search, SquarePen, Trash, X } from "lucide-react";
+import { Eye, Search, SquarePen, X } from "lucide-react";
 //components
-import InputForm from "../components/inputs/InputForm";
-import Pagination from "../components/buttons/Pagination";
+import InputForm from "../../components/inputs/InputForm.jsx";
+import Pagination from "../../components/buttons/Pagination.jsx";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
 //hook
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounce } from "../../hooks/useDebounce.js";
 //API
-import { getUsers, deleteUser } from "../services/users/userAPI";
+import { getUsers } from "../../services/users/userAPI.js";
 //model
-import { UserDetailsModel } from "../components/models/Users/UserDetailsModel";
-import { EditUserModel } from "../components/models/Users/EditUserModel";
-import AddStaffModel from "../components/models/Users/AddStaffModel.jsx";
-import Swal from "sweetalert2";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
+import { UserDetailsModel } from "../../components/models/Users/UserDetailsModel.jsx";
+import { EditUserModel } from "../../components/models/Users/EditUserModel.jsx";
 
-export const AdminStaffPage = () => {
+export const AdminCustomerPage = () => {
   const [message, setMessage] = useState("");
 
   const [search, setSearch] = useState("");
@@ -31,13 +29,11 @@ export const AdminStaffPage = () => {
 
   const [openDetails, setOpenDetails] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const [openAdd, setOpenAdd] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadUser = useCallback(async (page, search) => {
     setIsLoading(true);
-    // Dùng isStaff = true để chỉ lấy Staff
-    const dataRes = await getUsers(page, search, true);
+    const dataRes = await getUsers(page, search);
     if (!dataRes.success) {
       setUsers([]);
       setMessage(dataRes.message);
@@ -70,7 +66,6 @@ export const AdminStaffPage = () => {
       loadUser(1, debounceSearch);
     }
   }, [debounceSearch, loadUser]);
-
   const handlePageChange = async (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -87,50 +82,20 @@ export const AdminStaffPage = () => {
     setIdDetails(userId);
   };
 
-  const handleDelete = async (id) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const dataRes = await deleteUser(id);
-        if (dataRes.success) {
-          Swal.fire({
-            title: "Deleted!",
-            text: "User has been deleted.",
-            icon: "success",
-          });
-          loadUser(currentPage, debounceSearch);
-        } else {
-          Swal.fire({
-            title: "Error!",
-            text: dataRes.message,
-            icon: "error",
-          });
-        }
-      }
-    });
-  };
-
   return (
     <div className="flex flex-col gap-8 p-4 md:p-10">
-      {/* Title & Search Bar  */}
+      {/* Title & Search Bar - Responsive Flex Direction & Width */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pt-4 md:pt-10 gap-4">
         <h1 className="text-3xl md:text-4xl font-bold text-black shrink-0">
-          Manager Staff
+          Manager Customer
         </h1>
         {/* Responsive Search Container */}
         <div className="flex w-full md:w-2/3 lg:w-1/2 gap-4 justify-start md:justify-end items-center">
+          {/* Search Input */}
           <div className="w-full relative flex justify-center items-center">
-            {/* Search Input */}
             <InputForm
               Icon={Search}
-              placeholder="Search staff..."
+              placeholder="Search user..."
               name="search"
               type="text"
               value={search}
@@ -145,18 +110,10 @@ export const AdminStaffPage = () => {
               />
             )}
           </div>
-          {/* Add Staff Button */}
-          <button
-            onClick={() => setOpenAdd(true)}
-            className="flex items-center justify-center p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition duration-150 shrink-0 min-w-[120px]"
-          >
-            <CirclePlus className="w-5 h-5 mr-2" />
-            <span className="hidden sm:inline">Add Staff</span>
-          </button>
         </div>
       </div>
 
-      {/* Staff Table */}
+      {/* Product Table - Responsive Overflow */}
       <div className=" bg-white rounded-xl shadow-md overflow-x-auto border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Header */}
@@ -165,20 +122,23 @@ export const AdminStaffPage = () => {
               <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 No.
               </th>
-              {/* Tăng min-w cho cột Name, Email, Role */}
+              {/* Tăng min-w cho cột Tên để tránh bị quá nhỏ trên mobile */}
               <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[120px]">
                 Name
               </th>
               <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[150px]">
                 Email
               </th>
-              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[100px]">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                 Phone Number
               </th>
-              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left min-w-[100px]">
-                Role
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
+                Loyalty Points
               </th>
-              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center min-w-[100px]">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right min-w-[150px]">
+                Address
+              </th>
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                 Operator
               </th>
             </tr>
@@ -207,22 +167,21 @@ export const AdminStaffPage = () => {
                   <td className="px-3 py-3 whitespace-nowrap text-left">
                     {user?.phone || "___"}
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-left">
-                    {user?.role}
+                  <td className="px-3 py-3 whitespace-nowrap text-right">
+                    {user?.loyaltyPoints || 0}
+                  </td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right">
+                    {user?.address?.[0] || "___"}
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-3">
                       <SquarePen
-                        className="w-4 cursor-pointer text-gray-500 hover:text-black duration-150"
+                        className="w-4 h-4 cursor-pointer text-gray-500 hover:text-black duration-150"
                         onClick={() => handleEdit(user?._id)}
                       />
                       <Eye
-                        className="w-4 cursor-pointer text-gray-500 hover:text-blue-600 duration-150"
+                        className="w-4 h-4 cursor-pointer text-gray-500 hover:text-blue-600 duration-150"
                         onClick={() => handleSee(user?._id)}
-                      />
-                      <Trash
-                        className="w-4 cursor-pointer text-gray-500 hover:text-red-600 duration-150"
-                        onClick={() => handleDelete(user?._id)}
                       />
                     </div>
                   </td>
@@ -231,10 +190,10 @@ export const AdminStaffPage = () => {
           </tbody>
         </table>
         {users.length == 0 && (
-          <p className="text-center text-red-600 p-2 text-lg">{message}</p>
+          <p className="text-center text-red-600 p-4 text-lg">{message}</p>
         )}
         {isLoading && (
-          <div className="w-full flex justify-center items-center">
+          <div className="w-full flex justify-center items-center py-4">
             <Loader />
           </div>
         )}
@@ -250,9 +209,6 @@ export const AdminStaffPage = () => {
             setOpenEdit={setOpenEdit}
             reloadUser={loadUser}
           />
-        )}
-        {openAdd && (
-          <AddStaffModel setOpenAdd={setOpenAdd} reloadStaffs={loadUser} />
         )}
       </div>
 

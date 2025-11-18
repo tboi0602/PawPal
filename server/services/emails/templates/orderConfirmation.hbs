@@ -37,24 +37,6 @@
 
         <h3 style="color: #007bff;">Order Summary</h3>
 
-        <div class="product-list">
-          {{#each products}}
-            <div class="product-item">
-              <img src="{{this.imageUrl}}" alt="{{this.name}}" />
-              <div class="details">
-                <strong>{{this.name}}</strong>
-                <div>Quantity: {{this.quantity}}</div>
-              </div>
-            </div>
-          {{/each}}
-
-          {{#if otherItemsCount}}
-            <p style="text-align: center; margin-top: 15px; color: #555;">...and
-              {{otherItemsCount}}
-              other item(s).</p>
-          {{/if}}
-        </div>
-
         <table class="order-summary">
           <tbody>
             <tr class="total-row">

@@ -1,16 +1,19 @@
 import { Search, X, Eye, SquarePen } from "lucide-react";
 //components
-import InputForm from "../components/inputs/InputForm.jsx";
-import Pagination from "../components/buttons/Pagination";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
+import InputForm from "../../components/inputs/InputForm.jsx";
+import Pagination from "../../components/buttons/Pagination.jsx";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
 //hook
 import { useCallback, useEffect, useState } from "react";
 //API
-import { getOrders, updateOrderStatus } from "../services/shopping/orderAPI";
+import {
+  getOrders,
+  updateOrderStatus,
+} from "../../services/shopping/orderAPI.js";
 import Swal from "sweetalert2";
-import { formatDate } from "../utils/formatDate";
-import { OrderDetails } from "../components/models/Orders/OrderDetails";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { formatDate } from "../../utils/formatDate.js";
+import { OrderDetails } from "../../components/models/Orders/OrderDetails.jsx";
+import { useDebounce } from "../../hooks/useDebounce.js";
 
 export const AdminOrderPage = () => {
   const [message, setMessage] = useState("");

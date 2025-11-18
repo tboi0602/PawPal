@@ -2,16 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Minus, Trash, ShoppingCart } from "lucide-react";
 import Swal from "sweetalert2";
-import { OrderSummaryCard } from "../components/models/Orders/OrderSummaryCard";
-import { setItem } from "../utils/operations";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
-import { Loader2 } from "../components/models/Loaders/Loader2.jsx";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { OrderSummaryCard } from "../../components/models/Orders/OrderSummaryCard.jsx";
+import { setItem } from "../../utils/operations.js";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
+import { Loader2 } from "../../components/models/Loaders/Loader2.jsx";
+import { useDebounce } from "../../hooks/useDebounce.js";
 import {
   getCart,
   updateCartItem,
   removeCartItem,
-} from "../services/shopping/cartAPI";
+} from "../../services/shopping/cartAPI.js";
 
 const ItemOptions = ({
   productAttributes,
@@ -330,7 +330,7 @@ export const CartPage = () => {
 
   if (isLoading && items.length === 0) {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader />
       </div>
     );
@@ -338,81 +338,80 @@ export const CartPage = () => {
 
   if (message && items.length === 0) {
     return (
-      <div className="min-h-screen p-8 flex flex-col items-center justify-center bg-gray-50">
-        <div className="text-center max-w-xl p-8 bg-white rounded-xl shadow-lg">
-          <ShoppingCart className="mx-auto w-16 h-16 text-red-500" />
-          <h2 className="text-2xl font-bold mt-4 text-gray-800">{message}</h2>
-          <p className="text-gray-500 mt-2">
-            Browse our wide selection of products and find something great!
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
+        <div className="text-center max-w-md">
+          <ShoppingCart className="mx-auto w-16 h-16 text-gray-400 mb-4" />
+          <h2 className="text-2xl font-bold text-black mb-2">{message}</h2>
+          <p className="text-gray-600 mb-6">
+            Browse our collection and add items to your cart.
           </p>
-          <div className="mt-6">
-            <button
-              onClick={() => navigate("/home/products")}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition duration-150 font-semibold"
-            >
-              Shop Now
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/home/products")}
+            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold"
+          >
+            Shop Now
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-16 md:p-32 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-extrabold mb-8 border-b pb-2 text-gray-900">
-          Shopping Cart ({items.length} Items)
-        </h1>
+    <div className="min-h-screen bg-white px-4 md:px-6 py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 border-b border-gray-200 pb-6">
+          <h1 className="text-4xl font-bold text-black mb-2">Shopping Cart</h1>
+          <p className="text-gray-600">{items.length} item(s) in your cart</p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+            {/* Select All */}
+            <div className="flex items-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <input
                 type="checkbox"
                 checked={
                   selectedItems.length === items.length && items.length > 0
                 }
                 onChange={handleSelectAll}
-                className="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                className="w-5 h-5 border-gray-300 rounded cursor-pointer"
               />
-              <label className="ml-3 text-lg font-semibold text-gray-700">
-                Select All ({selectedItems.length} selected)
+              <label className="ml-3 font-medium text-black">
+                Select All ({selectedItems.length}/{items.length})
               </label>
             </div>
 
+            {/* Items */}
             {items.map((item, index) => (
               <div
                 key={item?._id || index}
-                className={`flex gap-4 p-4 bg-white border rounded-xl shadow-sm transition duration-200 
-                                    ${
-                                      selectedItems.includes(item._id)
-                                        ? " ring-1 ring-black/10"
-                                        : "border-gray-200 hover:shadow-md"
-                                    }`}
+                className={`flex gap-4 p-4 border rounded-lg transition duration-200 ${
+                  selectedItems.includes(item._id)
+                    ? "border-black bg-gray-50"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
               >
-                <div className="flex flex-col justify-start pt-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.includes(item._id)}
-                    onChange={() => handleSelectItem(item._id)}
-                    className="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item._id)}
+                  onChange={() => handleSelectItem(item._id)}
+                  className="w-5 h-5 border-gray-300 rounded cursor-pointer mt-1 shrink-0"
+                />
 
                 <img
                   src={item.productId?.images?.[0]}
                   alt={item.productId?.name}
-                  className="w-24 h-24 object-cover rounded-lg border shrink-0"
+                  className="w-24 h-24 object-cover rounded border border-gray-200 shrink-0"
                 />
 
-                <div className="grow flex flex-col justify-between">
-                  <div className="flex justify-between items-start w-full">
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900 line-clamp-2">
-                        {item.productId?.name || "Product Name"}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-black line-clamp-2">
+                        {item.productId?.name || "Product"}
                       </h3>
-
                       <ItemOptions
                         productAttributes={item.productId?.attributes}
                         cartAttribute={item.attribute}
@@ -420,8 +419,7 @@ export const CartPage = () => {
                         onAttributeChange={handleChangeAttribute}
                       />
                     </div>
-
-                    <div className="font-extrabold text-red-600 text-lg ml-4 shrink-0">
+                    <div className="font-bold text-lg text-black ml-4 shrink-0">
                       {(item.productId?.discountPrice || 0).toLocaleString(
                         "vi-VN"
                       )}
@@ -429,21 +427,21 @@ export const CartPage = () => {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center border border-gray-300 rounded">
                       <button
                         onClick={() => handleChangeQuantity(index, "dec")}
-                        className="p-2 text-gray-600 hover:bg-red-50 disabled:opacity-50 transition duration-150"
+                        className="p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <div className="px-4 py-1 font-semibold text-gray-900 bg-gray-50">
+                      <div className="px-3 py-1 font-medium bg-white text-black">
                         {item.quantity}
                       </div>
                       <button
                         onClick={() => handleChangeQuantity(index, "inc")}
-                        className="p-2 text-gray-600 hover:bg-green-50 transition duration-150"
+                        className="p-2 text-gray-600 hover:bg-gray-100"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -451,7 +449,7 @@ export const CartPage = () => {
 
                     <button
                       onClick={() => handleRemove(item._id)}
-                      className="cursor-pointer text-sm font-semibold text-red-600 flex items-center gap-1 p-2 rounded-lg hover:bg-red-50 transition duration-150"
+                      className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1 px-3 py-2 rounded hover:bg-red-50"
                     >
                       <Trash className="w-4 h-4" /> Remove
                     </button>
@@ -460,42 +458,42 @@ export const CartPage = () => {
               </div>
             ))}
 
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-6 gap-4 p-4 bg-white rounded-xl shadow-inner border border-gray-100">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
               <button
                 onClick={() => navigate("/home/products")}
-                className="px-6 py-3 border border-gray-400 rounded-lg button-black-outline duration-150"
+                className="px-6 py-3 border border-gray-300 rounded-lg text-black font-medium hover:bg-gray-50 transition"
               >
                 Continue Shopping
               </button>
               <button
                 onClick={handleCheckout}
                 disabled={itemsForSummary.length === 0}
-                className={`px-6 py-3 text-white rounded-lg shadow-lg font-extrabold 
-                                    ${
-                                      itemsForSummary.length > 0
-                                        ? "button-black"
-                                        : "bg-gray-400 cursor-not-allowed"
-                                    }`}
+                className={`flex-1 px-6 py-3 rounded-lg font-bold text-white transition ${
+                  itemsForSummary.length > 0
+                    ? "bg-black hover:bg-gray-900"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
               >
-                {isLoading && items.length > 0 ? (
-                  <Loader2 />
-                ) : (
-                  `
-                Proceed to Checkout ${subtotal?.toLocaleString("vi-VN") + "₫"}`
-                )}
+                {isLoading && items.length > 0
+                  ? "Processing..."
+                  : `Checkout - ${subtotal?.toLocaleString("vi-VN")}₫`}
               </button>
             </div>
           </div>
 
-          <OrderSummaryCard
-            orderItems={finalItemsFoSummary}
-            subtotal={subtotal}
-            shippingFee={0}
-            loadingFee={false}
-            discountAmount={0}
-            totalAmount={subtotal}
-            bestDiscount={null}
-          />
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <OrderSummaryCard
+              orderItems={finalItemsFoSummary}
+              subtotal={subtotal}
+              shippingFee={0}
+              loadingFee={false}
+              discountAmount={0}
+              totalAmount={subtotal}
+              bestDiscount={null}
+            />
+          </div>
         </div>
       </div>
     </div>

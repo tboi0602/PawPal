@@ -12,7 +12,8 @@
     "services/solutions",
     "services/emails",
     "services/notifications",
-    "services/payments"
+    "services/payments",
+    "services/reportings"
   ],
   "scripts": {
     "start:gateway": "npm --workspace gateway run start",
@@ -23,6 +24,7 @@
     "start:emails": "npm --workspace services/emails run start",
     "start:notifications": "npm --workspace services/notifications run start",
     "start:payments": "npm --workspace services/payments run start",
-    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:indentitys\" \"npm run start:users\" \"npm run start:shopping\" \"npm run start:solutions\" \"npm run start:emails\" \"npm run start:notifications\" \"npm run start:payments\""
+    "start:reportings": "npm --workspace services/reportings run start",
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:indentitys\" \"npm run start:users\" \"npm run start:shopping\" \"npm run start:solutions\" \"npm run start:emails\" \"npm run start:notifications\" \"npm run start:payments\" \"npm run start:reportings\""
   }
 }

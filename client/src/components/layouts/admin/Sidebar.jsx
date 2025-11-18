@@ -24,12 +24,12 @@ const navItems = [
   { name: "Staff", icon: User, link: "/admin/staffs" },
   { name: "Customer", icon: Users, link: "/admin/customers" },
   { name: "Service", icon: Settings, link: "/admin/services" },
+  { name: "Resource", icon: TicketCheck, link: "/admin/resources" },
   { name: "Product", icon: ShoppingBag, link: "/admin/products" },
   { name: "Order", icon: Logs, link: "/admin/orders" },
-  { name: "Booking", icon: TicketCheck, link: "/admin/booking" },
+  { name: "Booking", icon: TicketCheck, link: "/admin/bookings" },
   { name: "Promotion", icon: Percent, link: "/admin/promotions" },
   { name: "Notification", icon: Bell, link: "/admin/notifications" },
-  { name: "Contract", icon: FileText, link: "/admin/contracts" },
 ];
 
 export const Sidebar = ({ setIsClick }) => {

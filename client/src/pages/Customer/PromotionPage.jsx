@@ -11,17 +11,16 @@ import {
   ChevronDown,
 } from "lucide-react";
 //components
-import Pagination from "../components/buttons/Pagination";
+import Pagination from "../../components/buttons/Pagination";
 //hook
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounce } from "../../hooks/useDebounce.js";
 //API
-import { getPromotions } from "../services/promotions/promotionAPI.js";
+import { getPromotions } from "../../services/promotions/promotionAPI.js";
 //model
-import { PromotionDetailsModel } from "../components/models/Promotions/PromotionDetailsModel";
-import Swal from "sweetalert2";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
-import { formatDate } from "../utils/formatDate.js";
+import { PromotionDetailsModel } from "../../components/models/Promotions/PromotionDetailsModel";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
+import { formatDate } from "../../utils/formatDate.js";
 
 export const PromotionPage = () => {
   const [message, setMessage] = useState("");

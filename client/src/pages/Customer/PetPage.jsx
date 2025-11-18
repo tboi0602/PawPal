@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { getPets } from "../services/users/petAPI";
-import { getItem } from "../utils/operations";
-import { Loader } from "../components/models/Loaders/Loader";
-import { AddPetModel } from "../components/models/Users/Pets/AddPetModel";
-import { EditPetModel } from "../components/models/Users/Pets/EditPetModel";
+import { getPets } from "../../services/users/petAPI";
+import { getItem } from "../../utils/operations";
+import { Loader } from "../../components/models/Loaders/Loader";
+import { AddPetModel } from "../../components/models/Users/Pets/AddPetModel";
+import { EditPetModel } from "../../components/models/Users/Pets/EditPetModel";
 
 import {
   Cat,

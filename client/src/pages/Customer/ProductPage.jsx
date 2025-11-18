@@ -1,10 +1,10 @@
 import { Search } from "lucide-react";
-import { Card } from "../components/models/Products/Card";
-import { BackToTop } from "../components/buttons/BackToTop";
-import { Filter } from "../components/models/Products/Filter";
-import { getProducts } from "../services/shopping/productAPI";
+import { Card } from "../../components/models/Products/Card";
+import { BackToTop } from "../../components/buttons/BackToTop";
+import { Filter } from "../../components/models/Products/Filter";
+import { getProducts } from "../../services/shopping/productAPI";
 import { useCallback, useEffect, useState } from "react";
-import { Loader } from "../components/models/Loaders/Loader";
+import { Loader } from "../../components/models/Loaders/Loader";
 
 // Component Loader nhỏ gọn cho button
 const ButtonLoader = () => (
@@ -128,18 +128,25 @@ export const ProductPage = () => {
   return (
     <>
       <Filter filterProduct={handleFilters} />
-      <div className="p-16 md:p-16 min-h-screen w-full">
+      <div className="min-h-screen w-full bg-white">
         <BackToTop />
-        {/* Điều chỉnh khoảng cách và padding tổng thể */}
-        <div className="flex flex-col gap-16 md:ml-64 ">
+        <div className="flex flex-col gap-8 px-4 md:px-6 py-8 md:ml-64">
+          {/* Header */}
+          <div className="max-w-7xl">
+            <h1 className="text-4xl font-bold text-black mb-2">Products</h1>
+            <p className="text-gray-600">
+              Browse our collection of premium pet products
+            </p>
+          </div>
+
           {/* Search Bar */}
-          <div className="w-full flex items-center justify-center">
-            <div className=" w-3/4 lg:w-2/3 flex items-center border border-gray-400 rounded-xl overflow-hidden shadow-md">
-              <Search className="mx-4 text-gray-500 shrink-0" />
+          <div className="w-full flex items-center justify-center mb-4">
+            <div className="w-full md:w-2/3 lg:w-1/2 flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+              <Search className="mx-4 text-gray-400 shrink-0" size={20} />
               <input
                 type="text"
-                className="w-full p-4 outline-none transition duration-150 rounded-r-xl"
-                placeholder="Search for the product you want..."
+                className="w-full p-3 outline-none text-black placeholder-gray-400"
+                placeholder="Search products..."
                 value={search}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -150,24 +157,24 @@ export const ProductPage = () => {
               />
               <button
                 onClick={handleSearchSubmit}
-                className="px-6 py-4 bg-black text-white hover:bg-gray-800 transition duration-150 shrink-0"
-                disabled={isInitialLoading} // Vô hiệu hóa nút tìm kiếm khi đang tải
+                className="px-4 py-3 bg-black text-white hover:bg-gray-900 transition duration-200 shrink-0 font-semibold"
+                disabled={isInitialLoading}
               >
                 Search
               </button>
             </div>
           </div>
 
-          {/* Hiển thị Loader khi tải lần đầu/tìm kiếm */}
+          {/* Loading State */}
           {isInitialLoading && products.length === 0 ? (
             <div className="w-full flex justify-center items-center h-64">
               <Loader />
             </div>
           ) : (
             <>
-              {/* Hiển thị danh sách sản phẩm */}
+              {/* Products Grid */}
               {products.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {products.map((product) => (
                     <div key={product._id}>
                       <Card product={product} />
@@ -175,41 +182,39 @@ export const ProductPage = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-xl text-red-600 font-semibold mt-10">
-                  {message || "No products available at the moment."}
-                </p>
+                <div className="text-center py-16">
+                  <p className="text-lg text-gray-600 font-medium">
+                    {message || "No products found."}
+                  </p>
+                </div>
               )}
             </>
           )}
 
           {/* Load More Button */}
-          <div className="pt-4 pb-16">
-            {currentPage < totalPages && (
-              <div className="flex justify-center">
-                <button
-                  onClick={() => handleLoadMoreProducts(currentPage + 1)}
-                  className={`px-8 py-3 rounded-lg transition-colors font-semibold shadow-md min-w-[150px]
-                    ${
-                      isLoadMoreLoading
-                        ? "bg-gray-500 text-white cursor-not-allowed"
-                        : "bg-black text-white hover:bg-gray-800"
-                    }
-                  `}
-                  disabled={isLoadMoreLoading}
-                >
-                  {isLoadMoreLoading ? <ButtonLoader /> : "Load More"}
-                </button>
-              </div>
-            )}
+          {currentPage < totalPages && (
+            <div className="flex justify-center py-8">
+              <button
+                onClick={() => handleLoadMoreProducts(currentPage + 1)}
+                className={`px-8 py-3 rounded-lg transition-colors font-semibold ${
+                  isLoadMoreLoading
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-black text-white hover:bg-gray-900"
+                }`}
+                disabled={isLoadMoreLoading}
+              >
+                {isLoadMoreLoading ? "Loading..." : "Load More Products"}
+              </button>
+            </div>
+          )}
 
-            {!isInitialLoading &&
-              products.length > 0 &&
-              currentPage >= totalPages && (
-                <p className="text-center text-gray-600 italic">
-                  You've reached the end of the product list.
-                </p>
-              )}
-          </div>
+          {!isInitialLoading &&
+            products.length > 0 &&
+            currentPage >= totalPages && (
+              <p className="text-center text-gray-600 py-8 italic">
+                All products loaded
+              </p>
+            )}
         </div>
       </div>
     </>

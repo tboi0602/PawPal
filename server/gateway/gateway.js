@@ -14,6 +14,7 @@ import {
   NOTIFICATION_TARGET,
   PAYMENT_TARGET,
   SOLUTIONS_TARGET,
+  REPORTING_TARGET,
 } from "../configs/config.js";
 
 import { verifyAuth } from "../middlewares/authRequired.js";
@@ -27,18 +28,6 @@ app.use(
 );
 app.use(morgan("tiny"));
 app.use(cookieParser());
-
-// Debug middleware
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api-solution")) {
-    console.log(
-      `[DEBUG] ${req.method} ${
-        req.path
-      } → ${SOLUTIONS_TARGET}${req.path.replace("/api-solution", "")}`
-    );
-  }
-  next();
-});
 
 app.use(
   "/api-auth",
@@ -100,6 +89,15 @@ app.use(
     target: SOLUTIONS_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api-solution": "" },
+  })
+);
+app.use(
+  "/api-reporting",
+  verifyAuth,
+  createProxyMiddleware({
+    target: REPORTING_TARGET,
+    changeOrigin: true,
+    pathRewrite: { "^/api-reporting": "" },
   })
 );
 app.listen(GATEWAY_PORT, () =>

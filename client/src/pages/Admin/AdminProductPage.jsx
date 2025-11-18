@@ -1,17 +1,20 @@
 import { CirclePlus, Eye, Search, SquarePen, Trash, X } from "lucide-react";
 //components
-import InputForm from "../components/inputs/InputForm";
-import Pagination from "../components/buttons/Pagination";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
+import InputForm from "../../components/inputs/InputForm.jsx";
+import Pagination from "../../components/buttons/Pagination.jsx";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
 //hook
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounce } from "../../hooks/useDebounce.js";
 //API
-import { getProducts, deleteProduct } from "../services/shopping/productAPI";
+import {
+  getProducts,
+  deleteProduct,
+} from "../../services/shopping/productAPI.js";
 
-import { ProductDetailsModel } from "../components/models/Products/ProductDetailsModel";
-import { EditProductModel } from "../components/models/Products/EditProductModel";
-import { AddProductModel } from "../components/models/Products/AddProductModel";
+import { ProductDetailsModel } from "../../components/models/Products/ProductDetailsModel.jsx";
+import { EditProductModel } from "../../components/models/Products/EditProductModel.jsx";
+import { AddProductModel } from "../../components/models/Products/AddProductModel.jsx";
 import Swal from "sweetalert2";
 
 export const AdminProductPage = () => {

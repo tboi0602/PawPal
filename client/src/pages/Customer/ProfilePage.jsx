@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { getItem, setItem } from "../utils/operations";
-import InputForm from "../components/inputs/InputForm";
+import { getItem, setItem } from "../../utils/operations";
+import InputForm from "../../components/inputs/InputForm";
 import {
   ImagePlus,
   User,
@@ -12,9 +12,9 @@ import {
   Save,
   X,
 } from "lucide-react"; // Thêm Save và X
-import { editUser } from "../services/users/userAPI";
+import { editUser } from "../../services/users/userAPI";
 import Swal from "sweetalert2";
-import { Loader2 } from "../components/models/Loaders/Loader2";
+import { Loader2 } from "../../components/models/Loaders/Loader2";
 
 export const ProfilePage = () => {
   const [user, setUser] = useState(getItem("user-data") || {});
@@ -57,7 +57,9 @@ export const ProfilePage = () => {
         formData.append(key, tempUser[key]);
       } else if (key === "address" && Array.isArray(tempUser[key])) {
         // Filter out empty addresses before sending
-        tempUser[key].forEach((item, index) => formData.append(`${key}[${index}]`, item));
+        tempUser[key].forEach((item, index) =>
+          formData.append(`${key}[${index}]`, item)
+        );
       } else {
         formData.append(key, tempUser[key]);
       }

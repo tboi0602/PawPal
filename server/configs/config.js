@@ -58,3 +58,8 @@ export const MOMO_ACCESS_KEY = process.env.MOMO_ACCESS_KEY || "";
 export const MOMO_SECRET_KEY = process.env.MOMO_SECRET_KEY || "";
 export const MOMO_PARTNER_CODE = process.env.MOMO_PARTNER_CODE || "";
 export const MOMO_API_ENDPOINT = process.env.MOMO_API_ENDPOINT || "";
+
+//* Reporting
+export const REPORTING_PORT = process.env.REPORTING_PORT || 5008;
+export const MONGO_REPORTING_URI = process.env.MONGO_REPORTING_URI || "";
+export const REPORTING_TARGET = `http://localhost:${REPORTING_PORT}`;

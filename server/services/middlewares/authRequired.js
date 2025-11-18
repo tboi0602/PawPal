@@ -30,7 +30,7 @@ export const checkRole = (rolesRequired) => (req, res, next) => {
 
 //* Kiểm tra quyền truy cập
 export const checkUser = (req, res, next) => {
-  const requestedUserId = req.params.userId;
+  const requestedUserId = req.params.userId || req.params.id;
   const userRole = req.headers["x-user-role"];
 
   const authenticatedUserId = req.headers["x-user-id"];

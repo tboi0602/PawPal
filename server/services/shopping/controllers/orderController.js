@@ -3,6 +3,7 @@ import Order from "../models/order/Order.js";
 import Promotion from "../models/promotion/Promotion.js";
 import Product from "../models/product/Product.js";
 import PromotionUsage from "../models/promotion/PromotionUsage.js";
+import { EMAIL_TARGET } from "../../../configs/config.js";
 
 // Lấy order theo từng user có phân trang, lọc theo trạng thái
 export const getOrdersByUser = async (req, res) => {
@@ -97,6 +98,7 @@ export const getOrders = async (req, res) => {
 export const createOrder = async (req, res) => {
   const {
     userId,
+    email,
     rank,
     paymentMethod,
     orderItems,
@@ -243,7 +245,26 @@ export const createOrder = async (req, res) => {
       promotionCode: promotionCode || null,
     });
     await newOrder.save({ session }); //  COMMIT TRANSACTION
-
+    if (newOrder) {
+      const templateName = "orderConfirmation";
+      const to = email;
+      const subject = `Order Confirmation #${String(newOrder?._id).toUpperCase()}`;
+      const data = {
+        customerName: userId?.slice(-8).toUpperCase() || "Customer",
+        orderId: newOrder._id,
+        orderDate: newOrder.createdAt.toLocaleDateString("vi-VN"),
+        finalAmount: newOrder.finalAmount.toLocaleString("vi-VN") + " VND",
+        orderLink: `http://localhost:5173/home/orders`,
+      };
+      fetch(`${EMAIL_TARGET}/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ templateName, to, subject, data }),
+      }).catch((err) => console.log(err.message));
+    }
     await session.commitTransaction();
 
     return res.status(201).json({
@@ -368,7 +389,6 @@ export const updateOrderStatus = async (req, res) => {
       order.paymentMethod.status = "paid";
     }
     await order.save({ session });
-
     await session.commitTransaction();
 
     return res.status(200).json({

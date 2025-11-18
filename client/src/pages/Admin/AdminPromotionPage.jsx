@@ -8,25 +8,25 @@ import {
   Percent,
   Filter,
   Clock,
-  ChevronDown, // Thêm icon ChevronDown cho dropdown
+  ChevronDown, // Add ChevronDown icon for dropdown
 } from "lucide-react";
 //components
-import Pagination from "../components/buttons/Pagination";
+import Pagination from "../../components/buttons/Pagination.jsx";
 //hook
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounce } from "../../hooks/useDebounce.js";
 //API
 import {
   getPromotions,
   deletePromotion,
-} from "../services/promotions/promotionAPI.js";
+} from "../../services/promotions/promotionAPI.js";
 //model
-import { PromotionDetailsModel } from "../components/models/Promotions/PromotionDetailsModel";
-import { EditPromotionModel } from "../components/models/Promotions/EditPromotionModel";
-import { AddPromotionModel } from "../components/models/Promotions/AddPromotionModel";
+import { PromotionDetailsModel } from "../../components/models/Promotions/PromotionDetailsModel.jsx";
+import { EditPromotionModel } from "../../components/models/Promotions/EditPromotionModel.jsx";
+import { AddPromotionModel } from "../../components/models/Promotions/AddPromotionModel.jsx";
 import Swal from "sweetalert2";
-import { Loader } from "../components/models/Loaders/Loader.jsx";
-import { formatDate } from "../utils/formatDate.js";
+import { Loader } from "../../components/models/Loaders/Loader.jsx";
+import { formatDate } from "../../utils/formatDate.js";
 
 export const AdminPromotionPage = () => {
   const [message, setMessage] = useState("");
@@ -53,7 +53,7 @@ export const AdminPromotionPage = () => {
   const [openAdd, setOpenAdd] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // State cho dropdown
+  // State for dropdown
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 
